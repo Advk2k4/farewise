@@ -6,12 +6,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { money, todayISO, uid } from '@/lib/format'
-import { addTrips, useData } from '@/lib/store'
+import { addTrips, homeCurrency, useData } from '@/lib/store'
 
 const TYPES = [['taxi', 'Taxi'], ['car', 'Driving'], ['transit', 'Transit'], ['bike', 'Bike'], ['other', 'Other']] as const
 
 export function AddExpenseDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const cur = useData().prefs.rates.cur
+  const cur = homeCurrency(useData().prefs)
   const [date, setDate] = useState(todayISO())
   const [amount, setAmount] = useState('')
   const [mode, setMode] = useState('transit')

@@ -5,7 +5,7 @@ import type { Place } from '@/lib/api'
 import { fmtDist, fmtMin, money, timeOf } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
-const KIND_ICON = { walk: Footprints, bike: Bike, car: Car, taxi: CarTaxiFront, transit: TramFront }
+const KIND_ICON = { walk: Footprints, bike: Bike, car: Car, taxi: CarTaxiFront, auto: CarTaxiFront, transit: TramFront }
 
 /** A leg of a route as a compact chip. Transit lines keep their operator's colour; everything else stays monochrome. */
 function Chip({ s }: { s: Seg }) {
@@ -39,6 +39,7 @@ export function Tags({ op }: { op: Option }) {
         <span key={t} className={cn('inline-flex h-6 items-center rounded-full px-2.5 text-xs font-medium', t === 'Recommended' ? 'bg-foreground text-background' : 'bg-secondary text-foreground')}>{t}</span>
       ))}
       {op.rush && <span className="inline-flex h-6 items-center rounded-full bg-warn-soft px-2.5 text-xs font-medium text-warn">Traffic</span>}
+      {op.estimated && <span className="inline-flex h-6 items-center rounded-full border border-dashed border-border px-2.5 text-xs font-medium text-muted-foreground">Estimated</span>}
       {op.segs.some(s => s.realTime) && <span className="inline-flex h-6 items-center rounded-full bg-ok-soft px-2.5 text-xs font-medium text-ok">Live times</span>}
     </>
   )
@@ -49,7 +50,10 @@ function Steps({ op, cur }: { op: Option; cur: string }) {
       {op.segs.map((s, i) => {
         let main: React.ReactNode, detail: React.ReactNode = null, right = fmtMin(s.min)
         if (s.cat === 'walk') main = <>Walk {s.km ? `${fmtDist(s.km)} ` : ''}to {s.to}</>
-        else if (op.kind === 'transit') {
+        else if (op.kind === 'transit' && op.estimated) {
+          main = <><b className="font-semibold">{s.head}</b></>
+          detail = <>{s.from} → {s.to} · {s.stops} stop{s.stops! > 1 ? 's' : ''} · about {Math.round(s.min)} min incl. waiting</>
+        } else if (op.kind === 'transit') {
           main = <><b className="font-semibold">{(TRANSIT_LABEL[s.mode ?? ''] ?? 'Transit') + (s.label && s.label !== 'Transit' ? ` ${s.label}` : '')}</b>{s.head ? ` toward ${s.head}` : ''}</>
           detail = <>{s.from} → {s.to} · {s.stops} stop{s.stops! > 1 ? 's' : ''}{s.start ? ` · ${timeOf(s.start)}` : ''}{s.realTime ? ' · live' : ''}</>
         } else if (s.cat === 'taxi') { main = <>Taxi or ride-hail to {s.to}</>; right += ` · ${costText(op, cur)}` }
@@ -73,7 +77,7 @@ export function OptionCard({ op, cur, selected, open, onSelect, from, to, action
 }) {
   const Icon = KIND_ICON[op.kind]
   return (
-    <motion.div layout="position" transition={{ type: 'spring', stiffness: 500, damping: 40 }}
+    <motion.div layout="position" whileTap={{ scale: 0.99 }} transition={{ type: 'spring', stiffness: 500, damping: 40 }}
       className={cn('rounded-2xl border bg-card transition-[border-color,box-shadow] duration-150',
         selected ? 'border-foreground shadow-[inset_0_0_0_1px_var(--foreground)]' : 'border-border hover:border-faint')}>
       <button type="button" onClick={onSelect} aria-expanded={open} className="flex w-full flex-col gap-3 rounded-2xl p-4 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40">

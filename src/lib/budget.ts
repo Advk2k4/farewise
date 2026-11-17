@@ -1,6 +1,6 @@
 // Spending cycles: a cycle runs from a chosen day of the month to the day before it next month.
 import { addDays, pad2, shortDate, todayISO } from './format'
-import type { Data, Trip } from './store'
+import { homeCurrency, type Data, type Trip } from './store'
 
 const dayIn = (cycleDay: number, y: number, m: number) => Math.min(Math.max(1, cycleDay || 1), new Date(y, m + 1, 0).getDate())
 export function cycleStartFor(iso: string, cycleDay: number) {
@@ -29,7 +29,7 @@ export const cycleLabel = (start: string, cycleDay: number) => {
 export type DatedTrip = Trip & { date: string }
 export type CycleInfo = ReturnType<typeof cycleInfo>
 export function cycleInfo(data: Data, start: string) {
-  const { prefs } = data, cd = prefs.cycleDay, cur = prefs.rates.cur
+  const { prefs } = data, cd = prefs.cycleDay, cur = homeCurrency(prefs)
   const endX = nextCycleStart(start, cd)
   const dates: string[] = []
   for (let d = start; d < endX; d = addDays(d, 1)) dates.push(d)

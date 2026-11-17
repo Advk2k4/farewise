@@ -2,13 +2,15 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 import { Slot } from "radix-ui"
+import { motion, type HTMLMotionProps } from "motion/react"
+import { tap } from "@/lib/feedback"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent bg-clip-padding text-[15px] font-medium whitespace-nowrap transition-[background-color,box-shadow,transform,color] duration-150 outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:not-aria-[haspopup]:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent bg-clip-padding text-[15px] font-medium whitespace-nowrap transition-[background-color,box-shadow,transform,color] duration-150 outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/85",
+        default: "bg-primary text-primary-foreground shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-primary/88 hover:shadow-float",
         outline:
           "border-border bg-background hover:bg-secondary aria-expanded:bg-secondary",
         secondary:
@@ -50,15 +52,20 @@ function Button({
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
   }) {
-  const Comp = asChild ? Slot.Root : "button"
-
+  const cls = cn(buttonVariants({ variant, size, className }))
+  if (asChild) return <Slot.Root data-slot="button" data-variant={variant} data-size={size} className={cls} {...props} />
+  // A springy press so every tap visibly registers (Motion respects reduced motion via MotionConfig)
   return (
-    <Comp
+    <motion.button
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
+      className={cls}
+      whileTap={props.disabled ? undefined : { scale: 0.95 }}
+      whileHover={props.disabled ? undefined : { y: -1 }}
+      transition={{ type: "spring", stiffness: 600, damping: 30 }}
+      {...(props as HTMLMotionProps<"button">)}
+      onClick={(e: React.MouseEvent<HTMLButtonElement>) => { if (variant === "default") tap(); props.onClick?.(e) }}
     />
   )
 }

@@ -7,7 +7,7 @@ import { TripView, initialTrip, readTripLink, type TripState } from '@/views/Tri
 const PlanView = lazy(() => import('@/views/PlanView').then(m => ({ default: m.PlanView })))
 const SpendingView = lazy(() => import('@/views/SpendingView').then(m => ({ default: m.SpendingView })))
 const SettingsView = lazy(() => import('@/views/SettingsView').then(m => ({ default: m.SettingsView })))
-import { autoCountry, useData } from '@/lib/store'
+import { autoCountry, homeCurrency, ratesFor, tripCountry, useData } from '@/lib/store'
 import { cn } from '@/lib/utils'
 
 type Tab = 'trip' | 'plan' | 'spending' | 'settings'
@@ -76,9 +76,9 @@ export default function App() {
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-2">
-            <button type="button" onClick={() => go('settings')} title="Prices: change country and rates in Settings"
+            <button type="button" onClick={() => go('settings')} title="Prices follow the country you search in. Change rates in Settings"
               className="hidden h-10 items-center rounded-full bg-secondary px-3.5 text-sm font-medium tabular transition-colors hover:bg-pressed sm:inline-flex outline-none focus-visible:ring-3 focus-visible:ring-ring/40">
-              {prefs.country ? `${prefs.country} · ${prefs.rates.cur}` : `Prices in ${prefs.rates.cur}`}
+              {tab === 'trip' && trip.from ? (() => { const cc = tripCountry(prefs, trip.from, trip.to); return `${cc} · ${ratesFor(prefs, cc).cur}` })() : `Spending in ${homeCurrency(prefs)}`}
             </button>
             <button type="button" onClick={() => go('settings')} aria-label="Settings" aria-current={tab === 'settings' ? 'page' : undefined}
               className={cn('grid size-11 place-items-center rounded-full transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/40', tab === 'settings' ? 'bg-foreground text-background' : 'bg-secondary hover:bg-pressed')}>

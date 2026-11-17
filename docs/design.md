@@ -18,6 +18,17 @@ Farewise v2 is designed as a calm, engineering-grade utility. The design came fr
    - **One Magic UI component**, `NumberTicker`, animates the Spending total.
    - Everything respects `prefers-reduced-motion`, through `MotionConfig reducedMotion="user"` and a CSS rule.
 
+## Interaction feedback
+
+Every action answers the tap:
+
+- **Buttons** spring down when pressed and lift slightly on hover (Motion `whileTap` / `whileHover`). Primary buttons also give a light haptic tick on phones that support vibration.
+- **Segmented controls** (Leave now / Leave at / Arrive by, and the Settings choices) slide a thumb to the new option. The date and time fields slide in when you pick *Leave at* or *Arrive by*.
+- **Swap** spins its arrows half a turn.
+- **Log** and **Copy link** turn into a check mark with "Logged" or "Copied" for a moment, alongside a toast with **Undo**.
+- **Adding a stop** slides the new card into the timeline with a brief outline, pops a numbered marker onto the map, and confirms with a toast. Moving or removing a stop animates the list, and removing offers Undo.
+- **Option cards** press in slightly when tapped, and their details expand smoothly.
+
 ## Colour rules
 
 | Use | Token |

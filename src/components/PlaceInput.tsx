@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { Clock, House, LocateFixed, MapPin } from 'lucide-react'
+import { Clock, House, LocateFixed, MapPin, X } from 'lucide-react'
 import { Command, CommandGroup, CommandItem, CommandList } from '@/components/ui/command'
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
 import { reversePlace, searchPlaces, type Place } from '@/lib/api'
@@ -34,6 +34,9 @@ export function PlaceInput({ id, label, value, placeholder, icon, onPick, bias, 
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle')
   const [locating, setLocating] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const justFocused = useRef(false)
+  // select everything on focus so typing replaces the old place (the mouseup after a click would otherwise undo it)
+  const selectAll = () => requestAnimationFrame(() => { const el = inputRef.current; if (el && document.activeElement === el) el.setSelectionRange(0, el.value.length) })
   const seq = useRef(0)
 
   useEffect(() => { if (!open) setText(value?.name ?? '') }, [value, open])
@@ -80,12 +83,21 @@ export function PlaceInput({ id, label, value, placeholder, icon, onPick, bias, 
                 ref={inputRef} id={id} name={id} value={locating ? 'Finding you…' : text} placeholder={placeholder} autoComplete="off" spellCheck={false}
                 role="combobox" aria-expanded={open} aria-controls={`${id}-list`} aria-autocomplete="list"
                 className="w-full truncate bg-transparent text-base font-medium outline-none placeholder:font-normal placeholder:text-faint"
-                onFocus={e => { setOpen(true); e.currentTarget.select() }}
+                onFocus={() => { setOpen(true); justFocused.current = true; selectAll() }}
+                onMouseUp={e => { if (justFocused.current) { e.preventDefault(); justFocused.current = false; selectAll() } }}
+                onBlur={() => { justFocused.current = false }}
                 onChange={e => { setText(e.target.value); setOpen(true) }}
                 onKeyDown={e => { if (e.key === 'Escape') { setOpen(false); setText(value?.name ?? '') } }}
               />
               {value?.area && !open && <div className="truncate text-xs text-muted-foreground">{value.area}</div>}
             </div>
+            {open && text && (
+              <button type="button" aria-label={`Clear ${label}`} onMouseDown={e => e.preventDefault()}
+                onClick={() => { setText(''); setResults(null); inputRef.current?.focus() }}
+                className="grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground transition-[background-color,transform] hover:bg-pressed active:scale-90 outline-none focus-visible:ring-3 focus-visible:ring-ring/40">
+                <X className="size-4" />
+              </button>
+            )}
           </div>
         </PopoverAnchor>
         <PopoverContent align="start" sideOffset={6} className="w-(--radix-popover-trigger-width) min-w-72 rounded-2xl p-1.5 shadow-card"

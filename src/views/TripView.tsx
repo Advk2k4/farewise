@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
-import { motion } from 'motion/react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import { toast } from 'sonner'
 import { ArrowDownUp, Link2, Circle, Square, RotateCw, ArrowUpRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { Segmented } from '@/components/Segmented'
+import { FeedbackButton } from '@/components/FeedbackButton'
 import { Input } from '@/components/ui/input'
 import { PlaceInput } from '@/components/PlaceInput'
 import { OptionCard } from '@/components/OptionCard'
@@ -12,8 +13,8 @@ import type { Place } from '@/lib/api'
 import { clearNetCache } from '@/lib/api'
 import { tripOptions, mapsUrl, type TripResult } from '@/lib/options'
 import { atLocal, isoDate, money, roundNice, toHM, todayISO, uid } from '@/lib/format'
-import { addTrips, autoCountry, setCountry, useData, type Prefs } from '@/lib/store'
-import { COUNTRIES, countryName } from '@/lib/rates'
+import { addTrips, autoCountry, ratesFor, tripCountry, useData, type Prefs } from '@/lib/store'
+import { countryName } from '@/lib/rates'
 
 export type TripState = { from: Place | null; to: Place | null; mode: 'now' | 'leave' | 'arrive'; date: string; time: string }
 
@@ -25,7 +26,8 @@ export const EXAMPLES: { city: string; from: Place; to: Place }[] = [
   { city: 'Sydney', from: { name: 'Bondi Beach', area: 'Sydney, Australia', lat: -33.8915, lng: 151.2767, cc: 'AU' }, to: { name: 'Sydney Opera House', area: 'Sydney, Australia', lat: -33.8568, lng: 151.2153, cc: 'AU' } },
 ]
 
-export const routingPrefs = (p: Prefs) => ({ rates: p.rates, priority: p.priority, hasCar: p.hasCar, hasBike: p.hasBike, parkMin: p.parkMin })
+/** Routing settings for a trip priced in country `cc`. */
+export const routingPrefs = (p: Prefs, cc: string) => ({ rates: ratesFor(p, cc), cc, priority: p.priority, hasCar: p.hasCar, hasBike: p.hasBike, parkMin: p.parkMin })
 
 /** ?from=lat,lng&fn=Name&to=lat,lng&tn=Name&cc=GB */
 export function readTripLink(): Partial<TripState> | null {
@@ -52,7 +54,11 @@ const ease = [0.2, 0, 0, 1] as const
 
 export function TripView({ trip, setTrip }: { trip: TripState; setTrip: (fn: (t: TripState) => TripState) => void }) {
   const data = useData()
-  const P = data.prefs, cur = P.rates.cur
+  const P = data.prefs
+  // prices follow the country the trip is in (where it starts), so currency switches automatically
+  const cc = tripCountry(P, trip.from, trip.to)
+  const cur = ratesFor(P, cc).cur
+  const [spin, setSpin] = useState(0)
   const [result, setResult] = useState<TripResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
@@ -66,13 +72,18 @@ export function TripView({ trip, setTrip }: { trip: TripState; setTrip: (fn: (t:
   const { when, arriveBy } = useMemo(() => trip.mode === 'now'
     ? { when: new Date(), arriveBy: false }
     : { when: atLocal(trip.date, trip.time), arriveBy: trip.mode === 'arrive' }, [trip.mode, trip.date, trip.time, minuteTick]) // eslint-disable-line react-hooks/exhaustive-deps
-  const rp = routingPrefs(P)
+  const rp = routingPrefs(P, cc)
+  const placeKey = trip.from && trip.to ? [trip.from.lat, trip.from.lng, trip.to.lat, trip.to.lng].join(',') : ''
+  const lastPlaceKey = useRef('')
   const key = trip.from && trip.to ? JSON.stringify([trip.from.lat, trip.from.lng, trip.to.lat, trip.to.lng, when.getTime(), arriveBy, rp, nonce]) : ''
 
   useEffect(() => {
     if (!key || !trip.from || !trip.to) { setResult(null); return }
     let live = true
     setLoading(true); setError(false)
+    // a different trip (not just a new time or setting) drops the old routes straight away
+    setResult(r => r && r.opts[0] && placeKey === lastPlaceKey.current ? r : null)
+    lastPlaceKey.current = placeKey
     tripOptions(trip.from, trip.to, when, arriveBy, rp)
       .then(r => { if (!live) return; setResult(r); setSel(s => r.opts.some(o => o.key === s) ? s : r.opts[0]?.key ?? null) })
       .catch(() => { if (live) setError(true) })
@@ -86,18 +97,16 @@ export function TripView({ trip, setTrip }: { trip: TripState; setTrip: (fn: (t:
     ...(trip.from ? [{ ...trip.from, label: trip.from.name, kind: 'from' as const }] : []),
     ...(trip.to ? [{ ...trip.to, label: trip.to.name, kind: 'to' as const }] : []),
   ]
-  const tripCC = trip.from?.cc || trip.to?.cc
-  const otherCountry = tripCC && P.country && tripCC !== P.country && COUNTRIES[tripCC] ? tripCC : null
 
   const log = (key: string) => {
     const op = result?.opts.find(o => o.key === key)
     if (!op || !trip.from || !trip.to) return
     const undo = addTrips(isoDate(op.depart), [{ id: uid(), t: toHM(op.depart), from: trip.from.name, to: trip.to.name, mode: op.kind, label: op.title, cost: roundNice(op.cost), cur, parts: op.parts }])
-    toast(`Logged ${money(roundNice(op.cost), cur)} · ${op.title}`, { action: { label: 'Undo', onClick: undo } })
+    toast(`Logged ${money(roundNice(op.cost), cur)} · ${op.title}`, { description: P.country && cur !== ratesFor(P, P.country).cur ? `Saved in ${cur}; Spending totals only count ${ratesFor(P, P.country).cur}.` : undefined, action: { label: 'Undo', onClick: undo } })
   }
   const share = async () => {
     const url = tripLink(trip)
-    try { await navigator.clipboard.writeText(url); toast('Link copied') } catch { toast(url) }
+    try { await navigator.clipboard.writeText(url) } catch { toast(url) }
   }
 
   return (
@@ -110,26 +119,26 @@ export function TripView({ trip, setTrip }: { trip: TripState; setTrip: (fn: (t:
 
         <motion.section aria-label="Trip" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.06, ease }}
           className="rounded-2xl bg-card p-4 shadow-card">
-          <div className="relative flex flex-col gap-2">
+          <div className="group/card relative flex flex-col gap-2">
             <PlaceInput id="trip-from" label="From" value={trip.from} placeholder="Search an address or place…" icon={<Circle className="size-3.5 fill-current" />} onPick={pick('from')} />
             <PlaceInput id="trip-to" label="To" value={trip.to} placeholder="Where to? e.g. a station…" icon={<Square className="size-3.5 fill-current" />} onPick={pick('to')} bias={trip.from} />
             <Button type="button" variant="outline" size="icon-sm" aria-label="Swap start and destination"
-              className="absolute top-1/2 right-3 z-10 -translate-y-1/2 bg-card shadow-float"
-              onClick={() => setTrip(t => ({ ...t, from: t.to, to: t.from }))}><ArrowDownUp /></Button>
+              className="absolute top-1/2 right-3 z-10 -translate-y-1/2 bg-card shadow-float transition-opacity group-focus-within/card:pointer-events-none group-focus-within/card:opacity-0"
+              onClick={() => { setSpin(s => s + 1); setTrip(t => ({ ...t, from: t.to, to: t.from })) }}>
+              <motion.span animate={{ rotate: spin * 180 }} transition={{ type: 'spring', stiffness: 400, damping: 22 }} className="grid place-items-center"><ArrowDownUp /></motion.span>
+            </Button>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <ToggleGroup type="single" value={trip.mode} onValueChange={v => v && setTrip(t => ({ ...t, mode: v as TripState['mode'] }))} aria-label="When"
-              className="rounded-[36px] bg-secondary p-1">
-              {[['now', 'Leave now'], ['leave', 'Leave at'], ['arrive', 'Arrive by']].map(([v, l]) => (
-                <ToggleGroupItem key={v} value={v} className="h-9 rounded-[36px] px-3.5 text-sm font-medium data-[state=on]:bg-card data-[state=on]:shadow-float">{l}</ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-            {trip.mode !== 'now' && (
-              <div className="flex gap-2">
-                <Input type="date" aria-label="Date" value={trip.date} onChange={e => e.target.value && setTrip(t => ({ ...t, date: e.target.value }))} className="h-11 w-[150px]" />
-                <Input type="time" aria-label="Time" value={trip.time} onChange={e => e.target.value && setTrip(t => ({ ...t, time: e.target.value }))} className="h-11 w-[116px]" />
-              </div>
-            )}
+            <Segmented label="When" value={trip.mode} onChange={v => setTrip(t => ({ ...t, mode: v }))}
+              options={[['now', 'Leave now'], ['leave', 'Leave at'], ['arrive', 'Arrive by']]} />
+            <AnimatePresence initial={false}>
+              {trip.mode !== 'now' && (
+                <motion.div key="when" className="flex gap-2" initial={{ opacity: 0, x: -8, scale: 0.96 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: -8, scale: 0.96 }} transition={{ type: 'spring', stiffness: 500, damping: 34 }}>
+                  <Input type="date" aria-label="Date" value={trip.date} onChange={e => e.target.value && setTrip(t => ({ ...t, date: e.target.value }))} className="h-11 w-[150px]" />
+                  <Input type="time" aria-label="Time" value={trip.time} onChange={e => e.target.value && setTrip(t => ({ ...t, time: e.target.value }))} className="h-11 w-[116px]" />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </motion.section>
 
@@ -161,12 +170,6 @@ export function TripView({ trip, setTrip }: { trip: TripState; setTrip: (fn: (t:
             </div>
           ) : (
             <>
-              {otherCountry && (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-secondary p-4 text-sm">
-                  <span>Prices use your {countryName(P.country)} rates ({cur}). This trip is in {countryName(otherCountry)}.</span>
-                  <Button size="sm" onClick={() => { setCountry(otherCountry); toast(`Now using ${countryName(otherCountry)} prices`) }}>Use {countryName(otherCountry)} prices</Button>
-                </div>
-              )}
               {result.status.transit === 'none' && (
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-secondary p-4 text-sm">
                   <span>No public transit found. The open timetable data may not cover this area yet, or nothing runs at this time.</span>
@@ -184,12 +187,12 @@ export function TripView({ trip, setTrip }: { trip: TripState; setTrip: (fn: (t:
                 <motion.div key={op.key} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: i * 0.04, ease }}>
                   <OptionCard op={op} cur={cur} from={trip.from!} to={trip.to!} selected={sel === op.key} open={open === op.key}
                     onSelect={() => { setSel(op.key); setOpen(o => o === op.key ? null : op.key) }}
-                    actions={<Button size="sm" onClick={() => log(op.key)}>I took this · log {op.cost ? money(roundNice(op.cost), cur) : 'it'}</Button>} />
+                    actions={<FeedbackButton size="sm" done="Logged" onClick={() => log(op.key)}>I took this · log {op.cost ? money(roundNice(op.cost), cur) : 'it'}</FeedbackButton>} />
                 </motion.div>
               ))}
               <div className="flex flex-wrap items-center gap-3 pt-1">
-                <Button variant="secondary" size="sm" onClick={share}><Link2 /> Copy link to this trip</Button>
-                <span className="text-xs text-muted-foreground">{loading ? 'Updating… · ' : ''}Prices are estimates for {countryName(P.country ?? 'US')}. Driving assumes typical traffic for the hour.</span>
+                <FeedbackButton variant="secondary" size="sm" done="Link copied" onClick={share}><Link2 /> Copy link to this trip</FeedbackButton>
+                <span className="text-xs text-muted-foreground">{loading ? 'Updating… · ' : ''}Prices are estimates in {cur} for {countryName(cc)}. Driving assumes typical traffic for the hour.</span>
               </div>
             </>
           )}

@@ -6,8 +6,8 @@ import { hav, todayISO } from './format'
 
 export type Prefs = {
   home: Place | null
-  country: string | null      // whose default prices are in use (auto-set from your first trip)
-  rates: Rates
+  country: string | null      // home country: Spending's currency (auto-set from your first trip)
+  customRates: Record<string, Partial<Rates>>   // your own price overrides, per country
   priority: 'money' | 'balanced' | 'time'
   hasCar: boolean; hasBike: boolean; parkMin: number
   budget: number; cycleDay: number; workdays: 5 | 6 | 7; visit: number
@@ -20,7 +20,7 @@ export type Data = { prefs: Prefs; days: Record<string, { trips: Trip[] }>; plan
 const KEY = 'farewise-v2'
 const LEGACY_KEY = 'farewise-v1'
 export const DEFAULT_PREFS: Prefs = {
-  home: null, country: null, rates: defaultRates(FALLBACK_COUNTRY), priority: 'balanced',
+  home: null, country: null, customRates: {}, priority: 'balanced',
   hasCar: false, hasBike: false, parkMin: 8, budget: 0, cycleDay: 1, workdays: 7, visit: 30,
 }
 
@@ -30,8 +30,14 @@ function load(): Data {
     const raw = localStorage.getItem(KEY) ?? localStorage.getItem(LEGACY_KEY)
     if (!raw) return empty
     const o = JSON.parse(raw)
-    const prefs = { ...empty.prefs, ...(o.prefs ?? {}) }
-    prefs.rates = { ...defaultRates(prefs.country ?? FALLBACK_COUNTRY), ...(o.prefs?.rates ?? {}) }
+    const { rates: oldRates, ...rest } = o.prefs ?? {}
+    const prefs: Prefs = { ...empty.prefs, ...rest, customRates: rest.customRates ?? {} }
+    // earlier versions kept one set of rates for the home country: keep any edits as that country's overrides
+    if (oldRates && prefs.country && !prefs.customRates[prefs.country]) {
+      const def = defaultRates(prefs.country) as Record<string, unknown>
+      const diff = Object.fromEntries(Object.entries(oldRates).filter(([k, v]) => def[k] !== v && k !== 'cur'))
+      if (Object.keys(diff).length) prefs.customRates[prefs.country] = diff
+    }
     return { prefs, days: o.days ?? {}, plans: o.plans ?? {}, recent: o.recent ?? [] }
   } catch { return empty }
 }
@@ -66,12 +72,23 @@ export function useData() {
 export function rememberPlace(p: Place) {
   update(d => { d.recent = [p, ...d.recent.filter(x => x.name !== p.name || hav(x, p) > 0.05)].slice(0, 8) })
 }
-export function setCountry(cc: string) {
-  update(d => { d.prefs.country = cc; d.prefs.rates = { ...defaultRates(cc), lper100: d.prefs.rates.lper100 || 7.5 } })
+/** Prices for a country: built-in defaults plus your own overrides. */
+export function ratesFor(p: Prefs, cc?: string | null): Rates {
+  const c = cc && COUNTRIES[cc] ? cc : p.country ?? FALLBACK_COUNTRY
+  return { ...defaultRates(c), ...(p.customRates[c] ?? {}) }
 }
-/** The first trip anywhere sets local prices automatically. */
+/** The country a trip is priced in: where it starts, else where it ends, else home. */
+export function tripCountry(p: Prefs, ...places: (Place | null | undefined)[]) {
+  for (const pl of places) if (pl?.cc && COUNTRIES[pl.cc]) return pl.cc
+  return p.country ?? FALLBACK_COUNTRY
+}
+export const homeCurrency = (p: Prefs) => ratesFor(p, p.country).cur
+export function setHomeCountry(cc: string) { update(d => { d.prefs.country = cc }) }
+export function setCustomRate(cc: string, k: keyof Rates, v: number) { update(d => { d.prefs.customRates[cc] = { ...(d.prefs.customRates[cc] ?? {}), [k]: v } }) }
+export function resetRates(cc: string) { update(d => { delete d.prefs.customRates[cc] }) }
+/** The first place you search sets your home country (Spending's currency) automatically. */
 export function autoCountry(p?: Place | null) {
-  if (!data.prefs.country && p?.cc && COUNTRIES[p.cc]) setCountry(p.cc)
+  if (!data.prefs.country && p?.cc && COUNTRIES[p.cc]) setHomeCountry(p.cc)
 }
 export function addTrips(date: string, trips: Trip[]) {
   const before = structuredClone(data.days[date]?.trips ?? [])

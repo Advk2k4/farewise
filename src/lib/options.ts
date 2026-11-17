@@ -2,9 +2,10 @@
 import { addMin, hav, timeOf } from './format'
 import { roadRoute, transitPlan, type Place } from './api'
 import type { Rates } from './rates'
+import { offlineTransit } from './offline'
 
 export type Cat = 'walk' | 'bike' | 'car' | 'taxi' | 'bus' | 'tram' | 'metro' | 'rail' | 'ferry'
-export type Kind = 'walk' | 'bike' | 'car' | 'taxi' | 'transit'
+export type Kind = 'walk' | 'bike' | 'car' | 'taxi' | 'auto' | 'transit'
 export type Seg = {
   cat: Cat; label: string; min: number; km: number; from: string; to: string
   color?: string | null; text?: string | null; head?: string; stops?: number; mode?: string; start?: Date; realTime?: boolean
@@ -15,10 +16,10 @@ export type Option = {
   min: number; cost: number; costLo?: number; costHi?: number
   depart: Date; arrive: Date; walkMin?: number; transfers?: number
   segs: Seg[]; lines: Line[]; notes: string[]; mapsMode: string; parts: Record<string, number>
-  score: number; tags: string[]; rush?: boolean
+  score: number; tags: string[]; rush?: boolean; estimated?: boolean
 }
 export type TripResult = { opts: Option[]; status: { transit: 'ok' | 'none' | 'error'; road: 'ok' | 'error' } }
-export type RoutingPrefs = { rates: Rates; priority: 'money' | 'balanced' | 'time'; hasCar: boolean; hasBike: boolean; parkMin: number }
+export type RoutingPrefs = { rates: Rates; cc: string; priority: 'money' | 'balanced' | 'time'; hasCar: boolean; hasBike: boolean; parkMin: number }
 
 export const TRANSIT_LABEL: Record<string, string> = {
   BUS: 'Bus', COACH: 'Coach', TRAM: 'Tram', SUBWAY: 'Metro', METRO: 'Metro', RAIL: 'Train', REGIONAL_RAIL: 'Train',
@@ -33,6 +34,10 @@ export const modeCat = (m: string): Cat =>
 export const CAT_NAME: Record<Cat, string> = { walk: 'Walk', bike: 'Bike', car: 'Drive', taxi: 'Taxi', bus: 'Bus', tram: 'Tram', metro: 'Metro', rail: 'Train', ferry: 'Ferry' }
 const PRIORITY_K = { money: 25, balanced: 10, time: 3 } // minutes one local transit fare is "worth"
 
+// Places where auto-rickshaws aren't allowed (Mumbai's island city, south of Bandra/Sion)
+const NO_AUTO_ZONES: [number, number, number, number][] = [[18.88, 72.77, 19.035, 72.875]]
+const inZone = (p: { lat: number; lng: number }) => NO_AUTO_ZONES.some(([s, w, n, e]) => p.lat >= s && p.lat <= n && p.lng >= w && p.lng <= e)
+
 // OSRM has no live traffic, so driving time is scaled by typical traffic for the hour.
 export function trafficFactor(d: Date) {
   const day = d.getDay(), h = d.getHours() + d.getMinutes() / 60
@@ -44,15 +49,17 @@ export function trafficFactor(d: Date) {
 
 export async function tripOptions(o: Place, d: Place, when: Date, arriveBy: boolean, P: RoutingPrefs): Promise<TripResult> {
   const R = P.rates, km = hav(o, d)
-  const [tr, foot, bike, car] = await Promise.allSettled([
+  const [tr, foot, bike, car, off] = await Promise.allSettled([
     km > 0.5 ? transitPlan(o, d, when, arriveBy) : Promise.resolve([]),
     km <= 8 ? roadRoute('foot', o, d) : Promise.resolve(null),
     P.hasBike && km <= 30 ? roadRoute('bike', o, d) : Promise.resolve(null),
     km > 0.6 ? roadRoute('car', o, d) : Promise.resolve(null),
+    offlineTransit(o, d, when, arriveBy, P, P.cc), // mapped metro / local-train lines where live data is thin
   ])
+  const offline = off.status === 'fulfilled' ? off.value : []
   const opts: Option[] = []
   const status: TripResult['status'] = {
-    transit: tr.status === 'rejected' ? 'error' : km > 0.5 && !tr.value.length ? 'none' : 'ok',
+    transit: offline.length ? 'ok' : tr.status === 'rejected' ? 'error' : km > 0.5 && !tr.value.length ? 'none' : 'ok',
     road: car.status === 'rejected' ? 'error' : 'ok',
   }
   const timing = (min: number) => arriveBy ? { depart: addMin(when, -min), arrive: when } : { depart: when, arrive: addMin(when, min) }
@@ -75,6 +82,12 @@ export async function tripOptions(o: Place, d: Place, when: Date, arriveBy: bool
     opts.push({ ...base, key: 'taxi', kind: 'taxi', title: 'Taxi or ride-hail', sub: `${c.km.toFixed(1)} km, door to door`, min: taxiMin, cost: tc, costLo: tc * 0.85, costHi: tc * (rush ? 1.5 : 1.2), ...timing(taxiMin), rush,
       segs: [{ cat: 'taxi', label: 'Taxi', min: taxiMin, km: c.km, from: o.name, to: d.name }], lines: [{ coords: c.line, cat: 'taxi' }],
       notes: [...(rush ? ['Rush-hour traffic is likely'] : []), 'Includes about 5 min to get picked up'], mapsMode: 'driving', parts: { taxi: tc } })
+    if (R.autoBase != null && R.autoKm != null && c.km <= 25 && !inZone(o) && !inZone(d)) {
+      const am = drive * 1.05 + 3, ac = R.autoBase + R.autoKm * Math.max(0, c.km - 1.5)
+      opts.push({ ...base, key: 'auto', kind: 'auto', title: 'Auto rickshaw', sub: `${c.km.toFixed(1)} km, meter fare`, min: am, cost: ac, costLo: ac * 0.9, costHi: ac * 1.25, ...timing(am), rush,
+        segs: [{ cat: 'taxi', label: 'Auto', min: am, km: c.km, from: o.name, to: d.name }], lines: [{ coords: c.line, cat: 'taxi' }],
+        notes: [...(rush ? ['Rush-hour traffic is likely'] : []), 'Meter fare; agree the fare first where meters aren’t used', ...(c.km > 12 ? ['Long ride; some drivers may refuse'] : [])], mapsMode: 'driving', parts: { auto: ac } })
+    }
     if (P.hasCar) {
       const dm = drive + P.parkMin, fc = c.km * R.lper100 / 100 * R.fuel
       opts.push({ ...base, key: 'car', kind: 'car', title: 'Drive', sub: `${c.km.toFixed(1)} km, fuel only`, min: dm, cost: fc, ...timing(dm), rush,
@@ -106,6 +119,7 @@ export async function tripOptions(o: Place, d: Place, when: Date, arriveBy: bool
       if (opts.filter(x => x.kind === 'transit').length >= 4) break
     }
   }
+  opts.push(...offline)
   rank(opts, P)
   return { opts, status }
 }

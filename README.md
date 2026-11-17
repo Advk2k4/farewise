@@ -17,8 +17,11 @@ Free, no sign-up, no API keys. It works on phone and laptop, in light and dark m
 - **Walking, cycling, public transit, taxi / ride-hail and driving**, side by side. Transit uses real timetables (live where operators share them), with line names and colours, changes and walking time.
 - **Leave now, Leave at or Arrive by.**
 - **Recommended, Cheapest and Fastest** tags, weighted by whether you'd rather save money, save time or balance the two.
-- **Estimated prices** in local currency for 50 countries, all adjustable.
+- **Prices switch automatically** to the country and currency of the trip, from ballpark rates for 50 countries that you can adjust.
+- **Metro and local trains even where live data is thin.** For 12 Indian cities (Delhi, Mumbai, Bengaluru, Chennai, Kolkata, Hyderabad and more), the rail networks are bundled from OpenStreetMap and routed offline with estimated times. Auto rickshaws appear where they're a normal way to get around.
 - A **map** of the selected route, **step-by-step directions**, **Open in Google Maps** for live traffic, and **shareable links**: every trip lives in the URL.
+
+![Delhi: Rajiv Chowk to Hauz Khas on the Yellow Line, routed offline](docs/screenshots/india.png)
 
 ### 🗓️ Day plan
 - Add stops, give any of them a **fixed time**, and set how long you'll stay.
@@ -54,7 +57,7 @@ Farewise is a static web app that talks directly to free, open services:
 
 It queries them all at once, prices each option from local rates, and ranks the options with a single score: minutes + price (scaled so that **one local transit fare ≈ 10 minutes** when balanced) + small penalties for changes and long walks. Details: **[docs/how-it-works.md](docs/how-it-works.md)**.
 
-> **Coverage:** transit is only as good as the open timetable data. It works across much of Europe, North America, East Asia, Australia and South America. Some regions, such as most of India and the Gulf, have none yet; there Farewise shows walking, cycling, taxi and driving, and links to Google Maps for transit.
+> **Coverage:** live transit comes from open timetable data, which covers much of Europe, North America, East Asia, Australia and South America. Where it's thin, Farewise falls back to bundled metro and suburban-rail maps (12 Indian cities so far; `node scripts/fetch-networks.mjs` adds more), and otherwise links to Google Maps for transit.
 
 ## Built with
 
@@ -91,6 +94,8 @@ farewise/
 │   │   └── format.ts         time, money, distance, polylines
 │   ├── components/           PlaceInput, OptionCard, RouteMap, AddExpenseDialog, ui/ (shadcn)
 │   └── views/                TripView, PlanView, SpendingView, SettingsView
+├── public/networks/          bundled metro / local-train networks (OpenStreetMap)
+├── scripts/fetch-networks.mjs  refresh those networks from Overpass
 ├── docs/
 │   ├── how-it-works.md       data sources, options, prices, ranking
 │   ├── architecture.md       code layout, state, URLs, build
@@ -121,4 +126,4 @@ Consider [donating to Transitous](https://transitous.org/donate/).
 
 ## License
 
-[MIT](LICENSE) © 2026 Aadvik Mishra. Map data © OpenStreetMap contributors. Transit data © the [Transitous sources](https://transitous.org/sources/). Not affiliated with Uber; `DESIGN.md` is a community interpretation of its public design language.
+[MIT](LICENSE) © 2026 Aadvik Mishra. Map and network data © OpenStreetMap contributors (ODbL). Transit data © the [Transitous sources](https://transitous.org/sources/). Not affiliated with Uber; `DESIGN.md` is a community interpretation of its public design language.

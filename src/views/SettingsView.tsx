@@ -6,12 +6,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { Segmented } from '@/components/Segmented'
+import { FeedbackButton } from '@/components/FeedbackButton'
 import { PlaceInput } from '@/components/PlaceInput'
 import { COUNTRIES, FALLBACK_COUNTRY, countryName, type Rates } from '@/lib/rates'
 import { cycleLabel, cycleStartFor } from '@/lib/budget'
 import { ordinal, todayISO } from '@/lib/format'
-import { autoCountry, clearAll, importBackup, makeBackup, setCountry, update, useData, type Prefs } from '@/lib/store'
+import { autoCountry, clearAll, homeCurrency, importBackup, makeBackup, ratesFor, resetRates, setCustomRate, setHomeCountry, update, useData, type Prefs } from '@/lib/store'
 
 function Section({ title, children, id }: { title: string; children: React.ReactNode; id: string }) {
   return (
@@ -21,26 +22,22 @@ function Section({ title, children, id }: { title: string; children: React.React
     </section>
   )
 }
-function Pills<T extends string>({ value, options, onChange, label }: { value: T; options: [T, string][]; onChange: (v: T) => void; label: string }) {
-  return (
-    <ToggleGroup type="single" value={value} onValueChange={v => v && onChange(v as T)} aria-label={label} className="w-fit flex-wrap rounded-[36px] bg-secondary p-1">
-      {options.map(([v, l]) => <ToggleGroupItem key={v} value={v} className="h-9 rounded-[36px] px-3.5 text-sm font-medium data-[state=on]:bg-card data-[state=on]:shadow-float">{l}</ToggleGroupItem>)}
-    </ToggleGroup>
-  )
-}
+const Pills = Segmented
 
 export function SettingsView() {
   const { prefs: P } = useData()
-  const R = P.rates, cc = P.country ?? FALLBACK_COUNTRY
+  const home = P.country ?? FALLBACK_COUNTRY
+  const [editCC, setEditCC] = useState(home)
+  const R = ratesFor(P, editCC), hasCustom = !!P.customRates[editCC]
   const [backup, setBackup] = useState('')
   const [paste, setPaste] = useState('')
   const [confirmClear, setConfirmClear] = useState(false)
   const set = <K extends keyof Prefs>(k: K, v: Prefs[K]) => update(d => { d.prefs[k] = v })
-  const setRate = (k: keyof Rates, v: string) => { const n = Number(v); if (v !== '' && n >= 0) update(d => { (d.prefs.rates[k] as number) = n }) }
+  const setRate = (k: keyof Rates, v: string) => { const n = Number(v); if (v !== '' && n >= 0 && n !== R[k]) { setCustomRate(editCC, k, n); toast(`${countryName(editCC)} price saved`) } }
 
   const rate = (k: keyof Rates, label: string) => (
     <div className="flex flex-col gap-1.5"><Label htmlFor={`rate-${k}`}>{label}</Label>
-      <Input id={`rate-${k}`} type="number" min={0} step="any" inputMode="decimal" defaultValue={R[k] as number} key={`${cc}-${R[k]}`} onBlur={e => setRate(k, e.target.value)} className="tabular" /></div>
+      <Input id={`rate-${k}`} type="number" min={0} step="any" inputMode="decimal" defaultValue={R[k] as number} key={`${editCC}-${R[k]}`} onBlur={e => setRate(k, e.target.value)} className="tabular" /></div>
   )
 
   return (
@@ -57,23 +54,25 @@ export function SettingsView() {
       </Section>
 
       <Section title="Prices" id="s-prices">
-        <div className="flex flex-col gap-1.5"><Label id="country-l">Country for default prices</Label>
-          <Select value={cc} onValueChange={v => { setCountry(v); toast(`Now using ${countryName(v)} prices`) }}>
-            <SelectTrigger aria-labelledby="country-l" className="h-12 w-full max-w-sm rounded-[8px] border-transparent bg-secondary"><SelectValue /></SelectTrigger>
-            <SelectContent className="max-h-80">{Object.entries(COUNTRIES).sort((a, b) => a[1].name.localeCompare(b[1].name)).map(([k, c]) => <SelectItem key={k} value={k}>{c.name} ({c.cur})</SelectItem>)}</SelectContent>
+        <p className="text-sm text-muted-foreground">Trip prices switch automatically to the country you’re searching in, in its currency. Adjust any country’s rates below; your changes are kept per country.</p>
+        <div className="flex flex-col gap-1.5"><Label id="edit-cc-l">Edit prices for</Label>
+          <Select value={editCC} onValueChange={setEditCC}>
+            <SelectTrigger aria-labelledby="edit-cc-l" className="h-12 w-full max-w-sm rounded-[8px] border-transparent bg-secondary data-[size=default]:h-12"><SelectValue /></SelectTrigger>
+            <SelectContent className="max-h-80">{Object.entries(COUNTRIES).sort((a, b) => a[1].name.localeCompare(b[1].name)).map(([k, c]) => <SelectItem key={k} value={k}>{c.name} ({c.cur}){P.customRates[k] ? ' · edited' : ''}</SelectItem>)}</SelectContent>
           </Select></div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {rate('taxiBase', `Taxi flag fall (${R.cur})`)}{rate('taxiKm', `Taxi per km (${R.cur})`)}{rate('taxiMin', `Taxi per minute (${R.cur})`)}
           {rate('fare', `Transit fare per ride (${R.cur})`)}{rate('fuel', `Fuel per litre (${R.cur})`)}{rate('lper100', 'Car uses, L/100 km')}
+          {R.autoBase != null && rate('autoBase', `Auto, first 1.5 km (${R.cur})`)}{R.autoKm != null && rate('autoKm', `Auto per km after (${R.cur})`)}
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="secondary" size="sm" onClick={() => { setCountry(cc); toast('Prices reset') }}>Reset to {countryName(cc)} defaults</Button>
+          <Button variant="secondary" size="sm" disabled={!hasCustom} onClick={() => { resetRates(editCC); toast(`${countryName(editCC)} prices reset`) }}>Reset {countryName(editCC)} to defaults</Button>
           <span className="text-xs text-muted-foreground">Defaults are rough big-city figures. Your own numbers give better estimates.</span>
         </div>
       </Section>
 
       <Section title="What matters most" id="s-priority">
-        <Pills label="What matters most" value={P.priority} onChange={v => set('priority', v)} options={[['money', 'Save money'], ['balanced', 'Balanced'], ['time', 'Save time']]} />
+        <Pills size="md" label="What matters most" value={P.priority} onChange={v => set('priority', v)} options={[['money', 'Save money'], ['balanced', 'Balanced'], ['time', 'Save time']]} />
         <p className="text-sm text-muted-foreground">Balanced treats one transit fare as worth about 10 minutes. Save money leans towards transit and walking; save time leans towards taxis.</p>
       </Section>
 
@@ -89,15 +88,21 @@ export function SettingsView() {
       </Section>
 
       <Section title="Spending" id="s-spend">
+        <div className="flex flex-col gap-1.5"><Label id="home-cc-l">Your currency for Spending</Label>
+          <Select value={home} onValueChange={v => { setHomeCountry(v); toast(`Spending now in ${ratesFor({ ...P, country: v }, v).cur}`) }}>
+            <SelectTrigger aria-labelledby="home-cc-l" className="h-12 w-full max-w-sm rounded-[8px] border-transparent bg-secondary data-[size=default]:h-12"><SelectValue /></SelectTrigger>
+            <SelectContent className="max-h-80">{Object.entries(COUNTRIES).sort((a, b) => a[1].name.localeCompare(b[1].name)).map(([k, c]) => <SelectItem key={k} value={k}>{c.cur} · {c.name}</SelectItem>)}</SelectContent>
+          </Select>
+          <span className="text-xs text-muted-foreground">Trips logged in other currencies are listed but not added to your {homeCurrency(P)} totals.</span></div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5"><Label htmlFor="budget">Budget per cycle ({R.cur}, 0 for none)</Label>
+          <div className="flex flex-col gap-1.5"><Label htmlFor="budget">Budget per cycle ({homeCurrency(P)}, 0 for none)</Label>
             <Input id="budget" type="number" inputMode="decimal" min={0} step="any" defaultValue={P.budget} onBlur={e => { const n = Number(e.target.value); if (n >= 0) set('budget', n) }} className="tabular" /></div>
           <div className="flex flex-col gap-1.5"><Label htmlFor="cycle">Cycle starts on day</Label>
             <Input id="cycle" type="number" inputMode="numeric" min={1} max={28} step={1} defaultValue={P.cycleDay} onBlur={e => { const n = Math.round(Number(e.target.value)); if (n >= 1 && n <= 28) set('cycleDay', n) }} /></div>
         </div>
         <p className="text-sm text-muted-foreground">Current cycle: {cycleLabel(cycleStartFor(todayISO(), P.cycleDay), P.cycleDay)}. It resets on the {ordinal(P.cycleDay)} of each month.</p>
         <div className="flex flex-col gap-2"><span className="text-sm font-medium">Days that count towards “per day”</span>
-          <Pills label="Days that count" value={String(P.workdays) as '5' | '6' | '7'} onChange={v => set('workdays', Number(v) as 5 | 6 | 7)} options={[['7', 'Every day'], ['6', 'Mon–Sat'], ['5', 'Mon–Fri']]} /></div>
+          <Pills size="md" label="Days that count" value={String(P.workdays) as '5' | '6' | '7'} onChange={v => set('workdays', Number(v) as 5 | 6 | 7)} options={[['7', 'Every day'], ['6', 'Mon–Sat'], ['5', 'Mon–Fri']]} /></div>
         <div className="flex max-w-xs flex-col gap-1.5"><Label id="visit-l">Default time at each stop</Label>
           <Select value={String(P.visit)} onValueChange={v => set('visit', Number(v))}>
             <SelectTrigger aria-labelledby="visit-l" className="h-12 w-full rounded-[8px] border-transparent bg-secondary"><SelectValue /></SelectTrigger>
@@ -108,7 +113,7 @@ export function SettingsView() {
       <Section title="Your data" id="s-data">
         <p className="text-sm text-muted-foreground">Everything stays in this browser. The only things sent anywhere are the place names and coordinates needed to look up routes.</p>
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={async () => { const c = makeBackup(); setBackup(c); try { await navigator.clipboard.writeText(c); toast('Backup code copied') } catch { toast('Select the code below and copy it') } }}><Copy /> Copy backup code</Button>
+          <FeedbackButton variant="secondary" done="Copied" onClick={async () => { const c = makeBackup(); setBackup(c); try { await navigator.clipboard.writeText(c) } catch { toast('Select the code below and copy it') } }}><Copy /> Copy backup code</FeedbackButton>
         </div>
         {backup && <textarea readOnly value={backup} aria-label="Backup code" rows={3} className="w-full rounded-[8px] bg-secondary p-3 font-mono text-xs break-all" onFocus={e => e.currentTarget.select()} />}
         <div className="flex flex-col gap-1.5"><Label htmlFor="paste">Paste a backup code from another device</Label>

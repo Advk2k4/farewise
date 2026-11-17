@@ -53,7 +53,7 @@ const FMT: Record<string, Intl.NumberFormat> = {}
 export function money(n: number, cur = 'USD') {
   try {
     const base = FMT[cur] ??= new Intl.NumberFormat(undefined, { style: 'currency', currency: cur })
-    const digits = Math.abs(n) >= 50 ? 0 : (base.resolvedOptions().maximumFractionDigits ?? 2)
+    const digits = Math.abs(n) >= 10 || Number.isInteger(n) ? 0 : (base.resolvedOptions().maximumFractionDigits ?? 2)
     return new Intl.NumberFormat(undefined, { style: 'currency', currency: cur, minimumFractionDigits: digits, maximumFractionDigits: digits }).format(n)
   } catch { return `${cur} ${Math.round(n)}` }
 }

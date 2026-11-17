@@ -169,3 +169,5 @@
 .leaflet-tile-pane { filter: grayscale(1) brightness(1.03) contrast(.92); }
 .leaflet-container { font-family: inherit; background: var(--muted); }
 .leaflet-control-attribution { font-size: 11px; }
+.fw-pop { display: block; animation: fw-pop .38s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes fw-pop { from { transform: scale(.2); opacity: 0 } to { transform: scale(1); opacity: 1 } }

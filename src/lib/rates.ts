@@ -3,8 +3,9 @@
 //   fare: a typical single public-transport ride; fuel: petrol per litre
 // Ballpark 2025–26 big-city figures, only meant to rank options sensibly. Every value is editable in Settings.
 
-export type Country = { name: string; cur: string; taxi: [number, number, number]; fare: number; fuel: number }
-export type Rates = { cur: string; taxiBase: number; taxiKm: number; taxiMin: number; fare: number; fuel: number; lper100: number }
+// auto: [flag fall for the first 1.5 km, per km after] where auto-rickshaws / tuk-tuks are a normal option
+export type Country = { name: string; cur: string; taxi: [number, number, number]; fare: number; fuel: number; auto?: [number, number] }
+export type Rates = { cur: string; taxiBase: number; taxiKm: number; taxiMin: number; fare: number; fuel: number; lper100: number; autoBase?: number; autoKm?: number }
 
 export const COUNTRIES: Record<string, Country> = {
   US:{name:'United States', cur:'USD', taxi:[3.0, 1.7, 0.40], fare:2.9, fuel:0.95},
@@ -41,12 +42,12 @@ export const COUNTRIES: Record<string, Country> = {
   ZA:{name:'South Africa', cur:'ZAR', taxi:[10, 9, 1.0], fare:15, fuel:22},
   KE:{name:'Kenya', cur:'KES', taxi:[150, 50, 4], fare:100, fuel:180},
   NG:{name:'Nigeria', cur:'NGN', taxi:[700, 350, 40], fare:500, fuel:900},
-  IN:{name:'India', cur:'INR', taxi:[50, 18, 1.5], fare:30, fuel:105},
-  PK:{name:'Pakistan', cur:'PKR', taxi:[150, 60, 5], fare:60, fuel:270},
-  BD:{name:'Bangladesh', cur:'BDT', taxi:[60, 30, 2], fare:30, fuel:125},
+  IN:{name:'India', cur:'INR', taxi:[50, 18, 1.5], fare:30, fuel:105, auto:[30, 16]},
+  PK:{name:'Pakistan', cur:'PKR', taxi:[150, 60, 5], fare:60, fuel:270, auto:[120, 45]},
+  BD:{name:'Bangladesh', cur:'BDT', taxi:[60, 30, 2], fare:30, fuel:125, auto:[60, 25]},
   SG:{name:'Singapore', cur:'SGD', taxi:[4.4, 0.65, 0.35], fare:1.6, fuel:2.8},
   MY:{name:'Malaysia', cur:'MYR', taxi:[4, 1.25, 0.30], fare:2.5, fuel:2.05},
-  TH:{name:'Thailand', cur:'THB', taxi:[35, 7, 2], fare:30, fuel:35},
+  TH:{name:'Thailand', cur:'THB', taxi:[35, 7, 2], fare:30, fuel:35, auto:[60, 20]},
   ID:{name:'Indonesia', cur:'IDR', taxi:[7500, 4500, 600], fare:4000, fuel:13000},
   PH:{name:'Philippines', cur:'PHP', taxi:[50, 15, 2], fare:20, fuel:62},
   VN:{name:'Vietnam', cur:'VND', taxi:[12000, 16000, 500], fare:7000, fuel:22000},
@@ -63,6 +64,6 @@ export const COUNTRIES: Record<string, Country> = {
 export const FALLBACK_COUNTRY = 'US'
 export function defaultRates(cc?: string | null): Rates {
   const c = COUNTRIES[cc ?? ''] ?? COUNTRIES[FALLBACK_COUNTRY]
-  return { cur: c.cur, taxiBase: c.taxi[0], taxiKm: c.taxi[1], taxiMin: c.taxi[2], fare: c.fare, fuel: c.fuel, lper100: 7.5 }
+  return { cur: c.cur, taxiBase: c.taxi[0], taxiKm: c.taxi[1], taxiMin: c.taxi[2], fare: c.fare, fuel: c.fuel, lper100: 7.5, ...(c.auto ? { autoBase: c.auto[0], autoKm: c.auto[1] } : {}) }
 }
 export const countryName = (cc?: string | null) => (cc && COUNTRIES[cc]?.name) || cc || 'Unknown'

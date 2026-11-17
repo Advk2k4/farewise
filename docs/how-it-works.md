@@ -13,9 +13,17 @@ Farewise has no backend and no API keys. When you plan a trip, your browser asks
 
 All responses are cached in memory for the session, and transit lookups round the departure time to 5 minutes so repeated views reuse them. Farewise only calls the routing services once both ends of a trip are chosen; they're never called per keystroke.
 
-### Coverage
+### Coverage, and offline networks where live data is thin
 
 Transit depends on what Transitous has data for. In testing (November 2026) it returned routes in New York, London, Berlin, Tokyo, São Paulo, Bangalore and Sydney, and **nothing** in Mumbai, Delhi or Dubai. When there's no transit, Farewise says so and links to Google Maps transit for that trip. Walking, cycling and driving work everywhere OpenStreetMap has roads.
+
+**Offline metro and suburban-rail networks.** Some big cities have little or no open timetable data, India especially. In testing (November 2026), Transitous had no Delhi, Chennai or Kolkata transit, only long-distance trains in Mumbai, and only buses in Bengaluru. For these cities, Farewise ships the rail networks themselves:
+
+- [`scripts/fetch-networks.mjs`](../scripts/fetch-networks.mjs) downloads the metro, monorail, RRTS and suburban ("local") train lines with their stations in order, from OpenStreetMap via the Overpass API, into `public/networks/*.json`. Cities: Delhi NCR, Mumbai, Bengaluru, Chennai, Kolkata, Hyderabad, Pune, Ahmedabad, Kochi, Jaipur, Lucknow and Nagpur.
+- When both ends of a trip fall inside one of these cities, [`src/lib/offline.ts`](../src/lib/offline.ts) loads that city's file and builds a graph. Stations within 350 m of each other on different lines become interchanges. It then runs Dijkstra: you walk to a station within about 1 km, or take an auto or taxi to one further away, then ride, change and finish the same way.
+- **Times are estimates.** There's no timetable, so the app assumes average speeds (metro 33 km/h, local train 38 km/h, stops included) plus a typical wait (5–6 min). These options carry an **Estimated** tag and a note.
+- **Fares in India** use typical token-fare slabs: metro ₹10–60, suburban 2nd class ₹5–25.
+- These options are added alongside any live Transitous results, and the same ranking decides between them.
 
 ## 2. The options
 
@@ -24,6 +32,7 @@ Transit depends on what Transitous has data for. In testing (November 2026) it r
 | **Walk** | Under ~8 km straight-line and 100 min | OSRM foot | Free |
 | **Cycle** | You have a bike (Settings) and it's under ~30 km | OSRM bike + 2 min | Free |
 | **Transit** | Transitous finds itineraries (up to 4 distinct ones) | Real schedule. Door-to-door time includes waiting for the first departure. | One fare per ride, at most two |
+| **Auto rickshaw / tuk-tuk** | Countries where they're common (India, Pakistan, Bangladesh, Thailand), up to 25 km. Not offered where they aren't allowed, such as Mumbai south of Bandra/Sion. | OSRM car × traffic factor + 3 min | Flag fall for 1.5 km + per km, shown as a range |
 | **Taxi / ride-hail** | Any trip over ~0.6 km | OSRM car × traffic factor + 5 min pickup | Flag fall + per km + per minute, shown as a range |
 | **Drive** | You have a car (Settings) | OSRM car × traffic factor + parking time | Fuel only: km × L/100 km × fuel price |
 
@@ -45,7 +54,9 @@ Transit depends on what Transitous has data for. In testing (November 2026) it r
 - a typical single transit fare
 - petrol per litre
 
-Farewise picks the country from the first place you search. If a trip is in a different country, it offers to switch. You can override every number in **Settings → Prices**.
+**Prices follow the trip.** Each trip is priced in the country where it starts, in that country's currency: search Delhi and you see rupees, search London and you see pounds. You can override any country's rates in **Settings → Prices**; edits are kept per country.
+
+**Spending has its own currency.** By default it's the country of the first place you search, and you can change it in Settings. Trips logged in another currency are listed but not added to the totals.
 
 These are estimates for ranking options, not quotes:
 - Transit passes, free transfers, zones and surge pricing aren't modelled.

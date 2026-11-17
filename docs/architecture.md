@@ -14,11 +14,15 @@ src/
 │   ├── rates.ts             Default taxi / transit / fuel prices for 50 countries
 │   ├── api.ts               Photon search, OSRM car/bike/foot, Transitous transit + response cache
 │   ├── options.ts           Builds, prices, ranks and tags travel options for a trip
+│   ├── offline.ts           Offline metro / local-train routing on bundled OSM networks (India etc.)
+│   ├── feedback.ts          Light haptic tick on supporting phones
 │   ├── budget.ts            Spending cycles (any start day), pace and per-day maths
 │   ├── store.ts             App data in localStorage + a tiny external store (useSyncExternalStore)
 │   └── utils.ts             shadcn's cn() helper
 ├── components/
-│   ├── PlaceInput.tsx       Worldwide place search (Popover + cmdk), location, home, recents
+│   ├── PlaceInput.tsx       Worldwide place search (Popover + cmdk), select-all on focus, clear, location, recents
+│   ├── Segmented.tsx        Pill segmented control with a sliding thumb (Motion layoutId)
+│   ├── FeedbackButton.tsx   Button that confirms itself ("Logged ✓", "Copied ✓")
 │   ├── OptionCard.tsx       Option card, route strip, steps, tags
 │   ├── RouteMap.tsx         Leaflet map with OSM tiles, monochrome markers, coloured transit lines
 │   ├── AddExpenseDialog.tsx Manual expense form (shadcn Dialog)
@@ -29,6 +33,8 @@ src/
     ├── SpendingView.tsx     Cycle summary, chart, breakdown, trip list (lazy-loaded)
     └── SettingsView.tsx     Home, prices, preferences, budget, backup codes (lazy-loaded)
 ```
+
+Also: `public/networks/*.json` (rail networks per city, made by `scripts/fetch-networks.mjs`, data © OpenStreetMap contributors, ODbL).
 
 ## State and async work
 
