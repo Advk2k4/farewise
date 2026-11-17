@@ -39,7 +39,7 @@ Transit depends on what Transitous has data for. In testing (November 2026) it r
 
 ## 3. Prices
 
-[`src/js/data/rates.js`](../src/js/data/rates.js) holds ballpark big-city rates for 50 countries, in local currency:
+[`src/lib/rates.ts`](../src/lib/rates.ts) holds ballpark big-city rates for 50 countries, in local currency:
 
 - taxi flag fall, per km and per minute
 - a typical single transit fare

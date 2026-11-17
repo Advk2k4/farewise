@@ -1,0 +1,171 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-sans);
+    --color-faint: var(--faint);
+    --color-pressed: var(--pressed);
+    --color-ok: var(--ok);
+    --color-ok-soft: var(--ok-soft);
+    --color-warn: var(--warn);
+    --color-warn-soft: var(--warn-soft);
+    --color-bad: var(--bad);
+    --color-bad-soft: var(--bad-soft);
+    --shadow-card: var(--shadow-card);
+    --shadow-float: var(--shadow-float);
+    --font-sans: 'Geist Variable', sans-serif;
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Design tokens: a black-and-white system after DESIGN.md (Uber-inspired): ink #000, canvas #fff,
+   soft greys, pill controls, 16px cards. Colour appears only where it carries information:
+   real transit line colours, and the status of a stop (on time / tight / late). */
+:root {
+    --background: #ffffff;
+    --foreground: #000000;
+    --card: #ffffff;
+    --card-foreground: #000000;
+    --popover: #ffffff;
+    --popover-foreground: #000000;
+    --primary: #000000;
+    --primary-foreground: #ffffff;
+    --secondary: #efefef;
+    --secondary-foreground: #000000;
+    --muted: #f3f3f3;
+    --muted-foreground: #5e5e5e;
+    --accent: #efefef;
+    --accent-foreground: #000000;
+    --destructive: #c4291c;
+    --border: #e2e2e2;
+    --input: #e2e2e2;
+    --ring: #000000;
+    --faint: #6b6b6b;
+    --pressed: #e2e2e2;
+    --ok: #0e7a3b;
+    --ok-soft: #e3f4ea;
+    --warn: #8a5a00;
+    --warn-soft: #fbf0d9;
+    --bad: #b3261e;
+    --bad-soft: #fbe5e3;
+    --chart-1: #000000;
+    --chart-2: #5e5e5e;
+    --chart-3: #8c8c8c;
+    --chart-4: #b8b8b8;
+    --chart-5: #dcdcdc;
+    --radius: 1rem;
+    --shadow-card: rgba(0, 0, 0, 0.16) 0px 4px 16px 0px;
+    --shadow-float: rgba(0, 0, 0, 0.16) 0px 2px 8px 0px;
+    --sidebar: #ffffff; --sidebar-foreground: #000000; --sidebar-primary: #000000; --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #efefef; --sidebar-accent-foreground: #000000; --sidebar-border: #e2e2e2; --sidebar-ring: #000000;
+}
+
+/* Dark: the same duet, polarity flipped */
+.dark {
+    color-scheme: dark;
+    --background: #000000;
+    --foreground: #ffffff;
+    --card: #141414;
+    --card-foreground: #ffffff;
+    --popover: #1c1c1c;
+    --popover-foreground: #ffffff;
+    --primary: #ffffff;
+    --primary-foreground: #000000;
+    --secondary: #282828;
+    --secondary-foreground: #ffffff;
+    --muted: #1c1c1c;
+    --muted-foreground: #afafaf;
+    --accent: #282828;
+    --accent-foreground: #ffffff;
+    --destructive: #ff8a7f;
+    --border: #2e2e2e;
+    --input: #3a3a3a;
+    --ring: #ffffff;
+    --faint: #9a9a9a;
+    --pressed: #3a3a3a;
+    --ok: #5fd58e;
+    --ok-soft: #12301f;
+    --warn: #f2c14e;
+    --warn-soft: #33270b;
+    --bad: #ff8a7f;
+    --bad-soft: #3a1612;
+    --chart-1: #ffffff;
+    --chart-2: #afafaf;
+    --chart-3: #7a7a7a;
+    --chart-4: #4b4b4b;
+    --chart-5: #2e2e2e;
+    --shadow-card: rgba(0, 0, 0, 0.6) 0px 4px 16px 0px;
+    --shadow-float: rgba(0, 0, 0, 0.6) 0px 2px 8px 0px;
+    --sidebar: #141414; --sidebar-foreground: #ffffff; --sidebar-primary: #ffffff; --sidebar-primary-foreground: #000000;
+    --sidebar-accent: #282828; --sidebar-accent-foreground: #ffffff; --sidebar-border: #2e2e2e; --sidebar-ring: #ffffff;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    }
+  body {
+    @apply bg-background text-foreground;
+    }
+  button:not(:disabled), [role="button"]:not(:disabled) {
+    cursor: pointer;
+    }
+  html {
+    @apply font-sans;
+    color-scheme: light;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    -webkit-font-smoothing: antialiased;
+    }
+  h1, h2, h3 { font-weight: 700; letter-spacing: 0; text-wrap: balance; }
+  .tabular { font-variant-numeric: tabular-nums; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+}
+
+/* Leaflet: keep tiles calm in dark mode */
+.dark .leaflet-tile-pane { filter: grayscale(1) invert(1) brightness(.8) contrast(.9); }
+.leaflet-tile-pane { filter: grayscale(1) brightness(1.03) contrast(.92); }
+.leaflet-container { font-family: inherit; background: var(--muted); }
+.leaflet-control-attribution { font-size: 11px; }

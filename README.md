@@ -1,49 +1,49 @@
 # Farewise
 
-**The best way from A to B, anywhere.** Enter where you're starting and where you're going, and Farewise compares walking, cycling, public transit, taxis and driving, each with a time and an estimated cost. It also plans a day of several stops around fixed times and keeps track of what you spend getting around.
+**Every way from A to B, priced.** Enter where you're starting and where you're going, anywhere in the world, and Farewise compares walking, cycling, public transit, taxis and driving, each with a time and an estimated cost. It also plans a day of several stops around fixed times and tracks what getting around costs you.
 
 ### 👉 [Open Farewise: advk2k4.github.io/farewise](https://advk2k4.github.io/farewise/)
 
-No sign-up, no API keys, no tracking. It runs in your browser on phone or laptop.
+Free, no sign-up, no API keys. It works on phone and laptop, in light and dark mode.
 
-![Comparing ways from King's Cross to the Tower of London](docs/screenshots/trip.png)
+![King's Cross to the Tower of London](docs/screenshots/trip.png)
 
 ---
 
 ## Features
 
-### 🧭 Trip: every way from A to B
-- **Search any address or place worldwide**, or use your current location. Recent places and your home are one tap away.
-- **Compares walking, cycling, public transit, taxi / ride-hail and driving.** Transit uses real timetables (live where operators share it), with line names and colours, changes and walking time.
+### 🧭 Trip
+- **Search any address or place worldwide**, or use your current location; home and recent places are one tap away.
+- **Walking, cycling, public transit, taxi / ride-hail and driving**, side by side. Transit uses real timetables (live where operators share them), with line names and colours, changes and walking time.
 - **Leave now, Leave at or Arrive by.**
 - **Recommended, Cheapest and Fastest** tags, weighted by whether you'd rather save money, save time or balance the two.
 - **Estimated prices** in local currency for 50 countries, all adjustable.
-- **A map** of the selected route, **step-by-step directions**, an **Open in Google Maps** button for live traffic, and **shareable links** to any trip.
+- A **map** of the selected route, **step-by-step directions**, **Open in Google Maps** for live traffic, and **shareable links**: every trip lives in the URL.
 
-### 🗓️ Day plan: several stops, one day
-- Add stops, give any of them a **fixed time** (a meeting, a booking, a class) and set how long you'll stay.
-- Each leg gets the best way to travel; change any of them. The plan shows when you'll arrive, flags **On time / Tight / Late**, and offers a faster option when you'd be late.
+### 🗓️ Day plan
+- Add stops, give any of them a **fixed time**, and set how long you'll stay.
+- Each leg gets the best way to travel; change any of them. Arrivals are flagged **On time / Tight / Late**, with a faster option offered when you'd be late.
 - **Best visit order** keeps fixed times in sequence and fits the rest in where they add the least travel.
-- Totals for travel time, cost and finish time, plus how the day compares to your budget. Log the whole day in one tap.
+- Totals for travel time, cost and finish time; log the whole day in one tap.
 
 ![An example day in London](docs/screenshots/day-plan.png)
 
-### 💸 Spending: what getting around costs you
-- Log trips from Trip or Day plan with one tap, or add expenses by hand, then edit amounts to what you actually paid.
-- An optional **budget per cycle**, with the cycle starting on any day of the month (handy for payday or an employer's travel allowance).
+### 💸 Spending
+- Log trips from Trip or Day plan in one tap, or add expenses by hand, then edit amounts to what you actually paid.
+- An optional **budget per cycle**, with the cycle starting on any day of the month (handy for payday or a travel allowance).
 - **Per-day allowance**, **cycle-end pace**, a spending chart and a breakdown by mode.
 
-### 🌗 Also
-- Light and dark themes, a layout that works on phones, keyboard-friendly place search.
-- Your data stays in your browser; a **backup code** moves it to another device.
-
-<p align="center"><img src="docs/screenshots/trip-dark.png" alt="Shibuya to Tokyo Tower in dark mode" width="760"></p>
+<p align="center">
+  <img src="docs/screenshots/trip-dark.png" alt="Paris in dark mode" width="640">
+  &nbsp;
+  <img src="docs/screenshots/mobile.png" alt="Farewise on a phone" width="200">
+</p>
 
 ---
 
 ## How it works
 
-Farewise is a static site that talks directly to free, open services:
+Farewise is a static web app that talks directly to free, open services:
 
 | | Service |
 |---|---|
@@ -52,61 +52,62 @@ Farewise is a static site that talks directly to free, open services:
 | Public transit | [Transitous](https://transitous.org) (MOTIS 2, community-run) |
 | Map | [Leaflet](https://leafletjs.com) + [OpenStreetMap](https://www.openstreetmap.org/copyright) tiles |
 
-It asks all of them at once, prices each option from local rates, and ranks the options with one score: minutes + price (scaled so that **one local transit fare ≈ 10 minutes** when balanced) + small penalties for changes and long walks.
+It queries them all at once, prices each option from local rates, and ranks the options with a single score: minutes + price (scaled so that **one local transit fare ≈ 10 minutes** when balanced) + small penalties for changes and long walks. Details: **[docs/how-it-works.md](docs/how-it-works.md)**.
 
-Full details, including the traffic model, pricing and scoring, are in **[docs/how-it-works.md](docs/how-it-works.md)**.
+> **Coverage:** transit is only as good as the open timetable data. It works across much of Europe, North America, East Asia, Australia and South America. Some regions, such as most of India and the Gulf, have none yet; there Farewise shows walking, cycling, taxi and driving, and links to Google Maps for transit.
 
-> **Coverage note:** transit is only as good as the open timetable data. It works in many cities across Europe, North America, East Asia, Australia and South America, but some regions (for example most of India and the Gulf) have no open transit data yet. There, Farewise shows walking, cycling, taxi and driving, and links to Google Maps for transit.
+## Built with
 
----
+**React 19 · TypeScript · Vite · Tailwind CSS v4 · shadcn/ui (Radix) · Motion · Magic UI · Leaflet**
+
+The design follows [`DESIGN.md`](DESIGN.md), a black-and-white mobility design system from [awesome-claude-design](https://github.com/VoltAgent/awesome-claude-design). It was shaped with the [Taste Skill](https://github.com/Leonxlnx/taste-skill), audited against the [Vercel Web Interface Guidelines](https://github.com/vercel-labs/web-interface-guidelines), and tested in a real browser with [Playwright](https://github.com/microsoft/playwright-cli). See **[docs/design.md](docs/design.md)**.
 
 ## Run it locally
 
 ```bash
 git clone https://github.com/Advk2k4/farewise.git
 cd farewise
-python3 scripts/serve.py        # → http://localhost:8766
+npm install
+npm run dev        # → http://localhost:5173
 ```
 
-No install or build step is needed for development. To produce the single-file build that gets deployed:
-
-```bash
-python3 scripts/build.py        # → dist/index.html
-```
-
-Every push to `main` builds and deploys to GitHub Pages through [`.github/workflows/pages.yml`](.github/workflows/pages.yml).
+`npm run build` type-checks and builds to `dist/`. Every push to `main` deploys to GitHub Pages through [`.github/workflows/pages.yml`](.github/workflows/pages.yml).
 
 ## Project structure
 
 ```
 farewise/
+├── DESIGN.md                 the design system the UI is built on
+├── index.html
 ├── src/
-│   ├── index.html            page shell + script load order
-│   ├── styles/app.css        design tokens (light/dark), layout, components
-│   └── js/
-│       ├── core/             formatting, dates, distance, polyline decoding
-│       ├── data/rates.js     default prices for 50 countries
-│       ├── services/api.js   Photon, OSRM and Transitous clients (+ cache)
-│       ├── engine/           builds, prices, scores and tags options
-│       ├── state/            app state, storage, backup codes, spending cycles
-│       └── ui/               one file per view + map + shared components + app shell
-├── scripts/
-│   ├── serve.py              local dev server
-│   └── build.py              bundle src/ into dist/index.html
+│   ├── App.tsx               shell: nav, tabs, footer, toasts
+│   ├── index.css             Tailwind + light/dark design tokens
+│   ├── lib/                  typed, framework-free logic
+│   │   ├── api.ts            Photon, OSRM and Transitous clients (+ cache)
+│   │   ├── options.ts        builds, prices, ranks and tags options
+│   │   ├── rates.ts          default prices for 50 countries
+│   │   ├── budget.ts         spending cycles and pace
+│   │   ├── store.ts          local data + tiny external store
+│   │   └── format.ts         time, money, distance, polylines
+│   ├── components/           PlaceInput, OptionCard, RouteMap, AddExpenseDialog, ui/ (shadcn)
+│   └── views/                TripView, PlanView, SpendingView, SettingsView
 ├── docs/
 │   ├── how-it-works.md       data sources, options, prices, ranking
-│   ├── architecture.md       code layout, rendering, storage, URLs
+│   ├── architecture.md       code layout, state, URLs, build
+│   ├── design.md             design direction, colour rules, audit, testing
 │   └── screenshots/
 └── .github/workflows/pages.yml
 ```
 
+The original no-build vanilla JavaScript version is tagged [`v1-vanilla`](https://github.com/Advk2k4/farewise/tree/v1-vanilla).
+
 ## Contributing
 
-**Better default prices are the most useful contribution.** They live in [`src/js/data/rates.js`](src/js/data/rates.js), one line per country. Bug reports and pull requests are welcome.
+**Better default prices are the most useful contribution.** They live in [`src/lib/rates.ts`](src/lib/rates.ts), one line per country. Bug reports and pull requests are welcome.
 
 ## Fair use of the free services
 
-Farewise depends on volunteer-run infrastructure, so it caches responses and only routes when both ends of a trip are set. If you fork it, please follow each service's terms:
+Farewise depends on volunteer-run infrastructure, so it caches responses and routes only once both ends of a trip are set. If you fork it, follow each service's terms:
 - **Transitous:** open source, non-commercial, attribution required, and heavy use (>720 route searches a day) must be coordinated with them.
 - **Photon, FOSSGIS and OpenStreetMap tiles:** fair use with attribution.
 
@@ -116,8 +117,8 @@ Consider [donating to Transitous](https://transitous.org/donate/).
 
 - Prices are estimates from typical local rates, not quotes. Passes, free transfers, zones and surge pricing aren't modelled.
 - Driving times use a typical-traffic multiplier, not live traffic.
-- Transit coverage depends on open timetable data (see the coverage note above).
+- Transit coverage depends on open timetable data.
 
 ## License
 
-[MIT](LICENSE) © 2026 Aadvik Mishra. Map data © OpenStreetMap contributors. Transit data © the [Transitous sources](https://transitous.org/sources/).
+[MIT](LICENSE) © 2026 Aadvik Mishra. Map data © OpenStreetMap contributors. Transit data © the [Transitous sources](https://transitous.org/sources/). Not affiliated with Uber; `DESIGN.md` is a community interpretation of its public design language.

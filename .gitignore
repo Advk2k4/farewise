@@ -1,4 +1,12 @@
+node_modules/
 dist/
-.claude/
 .DS_Store
-__pycache__/
+
+# local tooling
+.claude/
+.agents/
+.playwright/
+.playwright-cli/
+.shots/
+.taste-skill/
+*.tsbuildinfo

@@ -1,68 +1,67 @@
 # Architecture
 
-Farewise is a static, dependency-free web app: vanilla JavaScript, one CSS file, and Leaflet from a CDN for the map. There's no framework, no bundler and no `npm install`. The code is split into small classic scripts that share one global scope and load in a fixed order. `scripts/build.py` inlines them into a single `dist/index.html` for deployment.
+Farewise is a static single-page app: **React 19 + TypeScript**, built with **Vite**, styled with **Tailwind CSS v4** and **shadcn/ui** (Radix primitives). **Motion** handles animation and **Leaflet** the map. There's no backend. Routes come straight from free public services (see [how-it-works.md](how-it-works.md)), and your data is saved in the browser.
 
 ## Layout
 
 ```
 src/
-├── index.html               Page shell, CDN links, script load order
-├── styles/app.css           Design tokens (light + dark), layout, components, map styles
-└── js/
-    ├── core/helpers.js      Formatting (money via Intl, times, dates), haversine, polyline decoding
-    ├── data/rates.js        Default taxi / transit / fuel prices for 50 countries
-    ├── services/api.js      Photon search, OSRM car/bike/foot, Transitous transit + response cache
-    ├── engine/options.js    Builds options from the three services, prices them, scores and tags them
-    ├── state/
-    │   ├── storage.js       App state `S`, localStorage persistence, recent places, backup codes
-    │   └── budget.js        Spending cycles and trip logging
-    └── ui/
-        ├── components.js    Place field with live suggestions, route strip, steps, option card
-        ├── map.js           One persistent Leaflet map moved between views
-        ├── trip.js          Trip view, shareable links, examples
-        ├── plan.js          Day planner (async leg chain, fixed-time checks, best order)
-        ├── spending.js      Spending view and chart
-        ├── settings.js      Settings view
-        ├── sheet.js         Add-expense sheet
-        └── app.js           Navigation, render loop, event delegation, boot
+├── main.tsx                 Entry: mounts <App/>, follows the system light/dark setting
+├── App.tsx                  Shell: header nav, tab routing (#hash), footer, mobile tab bar, toasts
+├── index.css                Tailwind + design tokens (light & dark) from DESIGN.md
+├── lib/                     Framework-free logic, fully typed
+│   ├── format.ts            Time, date, money (Intl), distance, polyline decoding
+│   ├── rates.ts             Default taxi / transit / fuel prices for 50 countries
+│   ├── api.ts               Photon search, OSRM car/bike/foot, Transitous transit + response cache
+│   ├── options.ts           Builds, prices, ranks and tags travel options for a trip
+│   ├── budget.ts            Spending cycles (any start day), pace and per-day maths
+│   ├── store.ts             App data in localStorage + a tiny external store (useSyncExternalStore)
+│   └── utils.ts             shadcn's cn() helper
+├── components/
+│   ├── PlaceInput.tsx       Worldwide place search (Popover + cmdk), location, home, recents
+│   ├── OptionCard.tsx       Option card, route strip, steps, tags
+│   ├── RouteMap.tsx         Leaflet map with OSM tiles, monochrome markers, coloured transit lines
+│   ├── AddExpenseDialog.tsx Manual expense form (shadcn Dialog)
+│   └── ui/                  shadcn/ui primitives (restyled to DESIGN.md) + Magic UI NumberTicker
+└── views/
+    ├── TripView.tsx         From → to, options, shareable URL state
+    ├── PlanView.tsx         Multi-stop day planner (lazy-loaded)
+    ├── SpendingView.tsx     Cycle summary, chart, breakdown, trip list (lazy-loaded)
+    └── SettingsView.tsx     Home, prices, preferences, budget, backup codes (lazy-loaded)
 ```
 
-## Rendering and async work
+## State and async work
 
-- All state lives in one object, `S`. `render()` batches through `requestAnimationFrame` and rebuilds `<main>` from the active view's function, which returns an HTML string. Every interpolated value goes through `esc()`.
-- **Async results without loops.**
-  - The trip view computes a **key** (endpoints + time slot + preferences). It starts a lookup only when the key changes, and ignores responses whose key is stale.
-  - The day planner does the same with a key over the whole plan.
-  - Results come back into `S` and trigger a normal `render()`.
-- **The map survives re-renders.** The Leaflet map lives in one detached `<div>`. After each render it's moved into the view's `#map-slot`, then resized, and redrawn only when what it shows has changed.
-- **Typing survives re-renders.** If async results arrive while you're typing in a place field, `doRender()` restores that field's text, focus and cursor position.
-- **Events are delegated:**
-  - `data-act` → `ACT` (clicks)
-  - `data-ch` → `CH` (change)
-  - place fields use `focusin` / `input` / `mousedown` / `keydown` on `[data-pf]`, with arrow-key and Enter navigation through suggestions
+- **Persistent data** lives in `lib/store.ts`: prefs, logged trips by date, saved day plans and recent places. `update(fn)` clones, mutates, publishes and saves (debounced) to `localStorage['farewise-v2']`. Components read it with `useData()`. Data from the earlier vanilla version (`farewise-v1`) is picked up automatically.
+- **Trip lookups.** `TripView` builds a key from the endpoints, the time and the routing preferences, and calls `tripOptions()` only when that key changes. Responses for an outdated key are ignored. `lib/api.ts` caches every response in memory, and transit times round to 5 minutes, so switching back and forth costs nothing.
+- **Day plans** chain legs in order, each departing when the previous stop ends. The same key-and-cache pattern applies.
+- **URL state:**
+  - the tab lives in `#trip`, `#plan`, `#spending` or `#settings`, and back/forward works
+  - the current trip lives in `?from=lat,lng&fn=…&to=lat,lng&tn=…&cc=GB`, so every trip can be bookmarked and shared
+  - `?example=plan` opens the example London day
 
-## Storage
+## Design system
 
-Everything is saved in the browser under `localStorage['farewise-v1']`:
+Tokens follow [`DESIGN.md`](../DESIGN.md), a black-and-white mobility system inspired by Uber's public design language:
+- ink-black primary actions and canvas white, with greys `#efefef`, `#f3f3f3` and `#e2e2e2`
+- pill controls and 16 px cards
+- Geist at weight 700 for headings and 400/500 for body text
 
-```js
-{ prefs: { home, country, rates:{cur, taxiBase, taxiKm, taxiMin, fare, fuel, lper100},
-           priority, hasCar, hasBike, parkMin, budget, cycleDay, workdays, visit },
-  days:  { 'YYYY-MM-DD': { trips: [{ id, t, from, to, mode, label, cost, cur, parts }] } },
-  plans: { 'YYYY-MM-DD': { date, start, startTime, ret, stops:[{ place, meet, visit }], choice } },
-  recent:[ place, … ] }
+Colour appears only where it carries information:
+- transit lines in their operators' own colours
+- the status of a stop (on time, tight, late)
+
+Dark mode is the same system with the polarity flipped. See [design.md](design.md) for how the design was set and audited.
+
+## Building and deploying
+
+```bash
+npm install
+npm run dev        # http://localhost:5173
+npm run build      # type-check + production build → dist/
+npm run preview    # serve dist/
 ```
 
-A **backup code** (`FW1.` + base64 JSON) copies this to another browser. Importing merges trips by id and never duplicates them.
+`.github/workflows/pages.yml` runs `npm ci && npm run build` on every push to `main` and publishes `dist/` to GitHub Pages. Vite's `base` is `/farewise/` when building in GitHub Actions.
 
-## URLs
-
-| URL | Opens |
-|---|---|
-| `#trip`, `#plan`, `#spending`, `#settings` | That tab |
-| `?from=lat,lng&fn=Name&to=lat,lng&tn=Name&cc=GB` | A specific trip; the **Copy link to this trip** button makes these |
-| `?example=plan` | The example London day |
-
-## Deploying
-
-`.github/workflows/pages.yml` runs `python3 scripts/build.py` on every push to `main` and publishes `dist/` to GitHub Pages. Any static host works the same way: upload `dist/index.html`, or serve `src/` as-is.
+The main chunk (React, Motion, Radix, Leaflet) is about 185 kB gzipped. The Day plan, Spending and Settings views load on demand.
