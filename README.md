@@ -4,7 +4,7 @@
 
 ### 👉 [Open Farewise: advk2k4.github.io/farewise](https://advk2k4.github.io/farewise/)
 
-Free, no sign-up, no API keys. It works on phone and laptop, in light and dark mode.
+Free, no sign-up, no API keys. It works on phone and laptop, with a light, dark or match-device theme.
 
 <a href="https://advk2k4.github.io/farewise/launch/farewise-launch.mp4">
   <img src="public/launch/preview.webp" alt="Farewise launch video: a trip from King's Cross to the Tower of London compared by metro, walking and taxi; the same app in Tokyo, Delhi and New York with local currency; and a day plan with on-time checks" width="100%">
@@ -37,6 +37,10 @@ Free, no sign-up, no API keys. It works on phone and laptop, in light and dark m
 - Totals for travel time, cost and finish time; log the whole day in one tap.
 
 ![An example day in London](docs/screenshots/day-plan.png)
+
+### 🌗 Light and dark
+- Switch between **Light, Dark and Match device** from the header or Settings; your choice is remembered.
+- Both themes are tuned together: line colours stay visible on either background, the map follows the theme, and all text meets WCAG AA contrast.
 
 ### 💸 Spending
 - Log trips from Trip or Day plan in one tap, or add expenses by hand, then edit amounts to what you actually paid.

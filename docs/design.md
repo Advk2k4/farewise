@@ -29,6 +29,19 @@ Every action answers the tap:
 - **Adding a stop** slides the new card into the timeline with a brief outline, pops a numbered marker onto the map, and confirms with a toast. Moving or removing a stop animates the list, and removing offers Undo.
 - **Option cards** press in slightly when tapped, and their details expand smoothly.
 
+## Light and dark
+
+The header has a three-way switch (Light, Dark, Match device), mirrored in Settings → Appearance. The choice is saved in `localStorage` and applied by a tiny inline script in `index.html` before first paint, so there's no flash of the wrong theme.
+
+- **Dark mode is the same system with the polarity flipped:** ink `#fff` on canvas `#000`, cards `#141414`, greys `#282828` / `#3a3a3a`. The selected thumb in segmented controls (`--thumb`) is *lighter* than its track in dark mode, so the selection never reads backwards.
+- **Inverted surfaces don't invert again.** The footer and the day-plan summary stay black in light mode and become bordered dark cards in dark mode, rather than glaring white slabs.
+- **Operator colours stay visible.** Very dark line colours (e.g. London's black Northern line) get an outline on chips and are lightened on the map in dark mode; very light ones are darkened on light maps (`src/lib/colour.ts`).
+- **The map follows the theme:** greyscale tiles in light mode, inverted greyscale in dark, and Leaflet's zoom buttons, attribution and tooltips use the theme tokens. Switching theme recolours the map without moving it.
+- **Toasts follow the app's theme**, not just the device's.
+- **Switching cross-fades** colours over 0.3 s (skipped with reduced motion).
+
+Every visible text element on every tab was measured against its real background in both themes (an automated WCAG contrast pass) and meets AA.
+
 ## Colour rules
 
 | Use | Token |
