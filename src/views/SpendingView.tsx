@@ -4,6 +4,8 @@ import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { NumberTicker } from '@/components/ui/number-ticker'
+import { AnimatedCircularProgressBar } from '@/components/ui/animated-circular-progress-bar'
+import { useTheme } from '@/lib/theme'
 import { AddExpenseDialog } from '@/components/AddExpenseDialog'
 import { cycleInfo, cycleStartFor, shiftCycle, type CycleInfo } from '@/lib/budget'
 import { atLocal, money, prettyDate, shortDate, todayISO } from '@/lib/format'
@@ -61,6 +63,7 @@ function Chart({ mi }: { mi: CycleInfo }) {
 export function SpendingView({ goSettings }: { goSettings: () => void }) {
   const data = useData()
   const P = data.prefs
+  const dark = useTheme().resolved === 'dark'
   const [off, setOff] = useState(0)
   const [adding, setAdding] = useState(false)
   const start = shiftCycle(cycleStartFor(todayISO(), P.cycleDay), off, P.cycleDay)
@@ -104,6 +107,19 @@ export function SpendingView({ goSettings }: { goSettings: () => void }) {
           <Button variant="ghost" size="icon-sm" aria-label="Next cycle" disabled={off >= 0} onClick={() => setOff(o => o + 1)}><ChevronRight /></Button>
         </div>
       </header>
+
+      {mi.budget > 0 && (
+        <section aria-label="Budget used" className="flex flex-wrap items-center gap-6 rounded-2xl border border-border p-5">
+          {/* Magic UI animated ring: share of this cycle's budget already spent */}
+          <AnimatedCircularProgressBar max={100} min={0} value={Math.min(100, Math.round(mi.spent / mi.budget * 100))}
+            gaugePrimaryColor={mi.spent > mi.budget ? (dark ? '#ff8a7f' : '#b3261e') : over ? '#f5c400' : (dark ? '#ffffff' : '#000000')}
+            gaugeSecondaryColor={dark ? '#2e2e2e' : '#e2e2e2'} className="size-28 text-xl font-bold" />
+          <div className="min-w-0">
+            <div className="text-xl font-bold">{mi.spent > mi.budget ? 'Over budget' : `${money(Math.max(0, mi.left), cur)} left`}</div>
+            <p className="mt-1 max-w-[46ch] text-sm text-muted-foreground">{money(mi.spent, cur)} of {money(mi.budget, cur)} spent this cycle{mi.isCur && mi.remaining ? `, with ${mi.remaining} day${mi.remaining === 1 ? '' : 's'} to go` : ''}.</p>
+          </div>
+        </section>
+      )}
 
       <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-4">
         {kpis.map(([k, v, s]) => (

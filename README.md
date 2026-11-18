@@ -38,6 +38,12 @@ Free, no sign-up, no API keys. It works on phone and laptop, with a light, dark 
 
 ![An example day in London](docs/screenshots/day-plan.png)
 
+### ✨ Feels alive
+- The home screen shows **how it works before you type**: beams run from *From* through every mode to *To*, and a headline word cycles through the ways you could go. Example trips scroll past, ready to tap.
+- Routes **draw themselves onto the map**, the start point pulses, and the recommended option has a slow travelling border.
+- Logging a trip ends with a **small burst of confetti**; the Day plan timeline **fills as you scroll**, and Spending shows a **budget ring**.
+- All of it stops under *Reduce motion*.
+
 ### 🌗 Light and dark
 - Switch between **Light, Dark and Match device** from the header or Settings; your choice is remembered.
 - Both themes are tuned together: line colours stay visible on either background, the map follows the theme, and all text meets WCAG AA contrast.
@@ -72,7 +78,9 @@ It queries them all at once, prices each option from local rates, and ranks the 
 
 ## Built with
 
-**React 19 · TypeScript · Vite · Tailwind CSS v4 · shadcn/ui (Radix) · Motion · Magic UI · Leaflet**
+**React 19 · TypeScript · Vite · Tailwind CSS v4 · shadcn/ui (Radix) · Motion · Magic UI · React Bits · Leaflet**
+
+A few effects are adapted from [Magic UI](https://magicui.design) (animated beams, border beam, marquee, progress ring), [React Bits](https://reactbits.dev) (Threads, Rotating Text, Count Up) and [Aceternity UI](https://ui.aceternity.com) (the idea behind the timeline beam and the cycling search hints). Confetti is [canvas-confetti](https://github.com/catdad/canvas-confetti).
 
 The design follows [`DESIGN.md`](DESIGN.md), a black-and-white mobility design system from [awesome-claude-design](https://github.com/VoltAgent/awesome-claude-design). It was shaped with the [Taste Skill](https://github.com/Leonxlnx/taste-skill), audited against the [Vercel Web Interface Guidelines](https://github.com/vercel-labs/web-interface-guidelines), and tested in a real browser with [Playwright](https://github.com/microsoft/playwright-cli). See **[docs/design.md](docs/design.md)**.
 
@@ -103,7 +111,7 @@ farewise/
 │   │   ├── budget.ts         spending cycles and pace
 │   │   ├── store.ts          local data + tiny external store
 │   │   └── format.ts         time, money, distance, polylines
-│   ├── components/           PlaceInput, OptionCard, RouteMap, AddExpenseDialog, ui/ (shadcn)
+│   ├── components/           PlaceInput, OptionCard, RouteMap, HowItWorks, fx/ (React Bits), ui/ (shadcn + Magic UI)
 │   └── views/                TripView, PlanView, SpendingView, SettingsView
 ├── public/networks/          bundled metro / local-train networks (OpenStreetMap)
 ├── public/launch/            launch video, poster and README preview

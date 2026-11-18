@@ -5,6 +5,11 @@ import { ArrowDownUp, Link2, Circle, Square, RotateCw, ArrowUpRight } from 'luci
 import { Button } from '@/components/ui/button'
 import { Segmented } from '@/components/Segmented'
 import { FeedbackButton } from '@/components/FeedbackButton'
+import { HowItWorks } from '@/components/HowItWorks'
+import { Marquee } from '@/components/ui/marquee'
+import Threads from '@/components/fx/Threads'
+import RotatingText from '@/components/fx/RotatingText'
+import { useTheme } from '@/lib/theme'
 import { Input } from '@/components/ui/input'
 import { PlaceInput } from '@/components/PlaceInput'
 import { OptionCard } from '@/components/OptionCard'
@@ -59,6 +64,7 @@ export function TripView({ trip, setTrip }: { trip: TripState; setTrip: (fn: (t:
   const cc = tripCountry(P, trip.from, trip.to)
   const cur = ratesFor(P, cc).cur
   const [spin, setSpin] = useState(0)
+  const dark = useTheme().resolved === 'dark'
   const [result, setResult] = useState<TripResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
@@ -112,16 +118,24 @@ export function TripView({ trip, setTrip }: { trip: TripState; setTrip: (fn: (t:
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(360px,460px)_1fr] lg:gap-8">
       <div className="flex min-w-0 flex-col gap-6">
-        <motion.header initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease }}>
-          <h1 className="text-[36px] leading-[44px] sm:text-[44px] sm:leading-[52px]">Every way from A to B, priced.</h1>
+        <motion.header className="relative" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease }}>
+          {/* The one ambient effect: React Bits Threads, drifting like route lines behind the headline (pauses off-screen and for reduced motion) */}
+          <div aria-hidden="true" className="pointer-events-none absolute -inset-x-4 sm:-inset-x-10 -top-14 -bottom-10 -z-10 [mask-image:linear-gradient(180deg,transparent,#000_18%,#000_62%,transparent)]">
+            <Threads color={dark ? '#ffffff' : '#000000'} accentColor="#f5c400" amplitude={1.7} distance={0.4} lineCount={70} thickness={0.55} angle={18} speed={0.3} opacity={dark ? 0.45 : 0.4} enableMouseInteraction={false} className="h-full w-full" />
+          </div>
+          <h1 className="text-[36px] leading-[44px] sm:text-[44px] sm:leading-[52px]">
+            Every way from <span className="whitespace-nowrap">A to B,</span>{' '}
+            <RotatingText texts={['priced.', 'by metro.', 'on foot.', 'by bike.', 'by taxi.', 'by bus.']} rotationInterval={2400} staggerDuration={0.012} staggerFrom="first" animatePresenceMode="popLayout" animatePresenceInitial={false}
+              mainClassName="relative inline-flex overflow-hidden rounded-xl bg-foreground px-2.5 text-background align-bottom" splitLevelClassName="overflow-hidden pb-1" />
+          </h1>
           <p className="mt-3 max-w-[52ch] text-base text-muted-foreground">Walking, cycling, transit, taxis and driving, compared for any trip in the world. Real timetables where cities publish them. Free, with no sign-up.</p>
         </motion.header>
 
         <motion.section aria-label="Trip" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.06, ease }}
           className="rounded-2xl bg-card p-4 shadow-card">
           <div className="group/card relative flex flex-col gap-2">
-            <PlaceInput id="trip-from" label="From" value={trip.from} placeholder="Search an address or place…" icon={<Circle className="size-3.5 fill-current" />} onPick={pick('from')} />
-            <PlaceInput id="trip-to" label="To" value={trip.to} placeholder="Where to? e.g. a station…" icon={<Square className="size-3.5 fill-current" />} onPick={pick('to')} bias={trip.from} />
+            <PlaceInput id="trip-from" label="From" value={trip.from} placeholder={['Search an address or place…', 'e.g. King’s Cross, London', 'e.g. Shibuya Station, Tokyo', 'e.g. Connaught Place, Delhi', 'Or use your current location']} icon={<Circle className="size-3.5 fill-current" />} onPick={pick('from')} />
+            <PlaceInput id="trip-to" label="To" value={trip.to} placeholder={['Where to?', 'e.g. Tower of London', 'e.g. Times Square, New York', 'e.g. a hospital, an office, a station…']} icon={<Square className="size-3.5 fill-current" />} onPick={pick('to')} bias={trip.from} />
             <Button type="button" variant="outline" size="icon-sm" aria-label="Swap start and destination"
               className="absolute top-1/2 right-3 z-10 -translate-y-1/2 bg-card shadow-float transition-opacity group-focus-within/card:pointer-events-none group-focus-within/card:opacity-0"
               onClick={() => { setSpin(s => s + 1); setTrip(t => ({ ...t, from: t.to, to: t.from })) }}>
@@ -146,15 +160,19 @@ export function TripView({ trip, setTrip }: { trip: TripState; setTrip: (fn: (t:
 
         <section aria-label="Ways to get there" aria-live="polite" className="flex flex-col gap-3">
           {!trip.from || !trip.to ? (
-            <div className="flex flex-col gap-3">
-              <h2 className="text-xl">Try a trip</h2>
-              <div className="flex flex-wrap gap-2">
-                {EXAMPLES.map(x => (
-                  <button key={x.city} type="button" onClick={() => { autoCountry(x.from); setTrip(t => ({ ...t, from: x.from, to: x.to })) }}
-                    className="inline-flex h-11 items-center gap-2 rounded-full bg-secondary px-4 text-sm font-medium transition-[background-color,transform] hover:bg-pressed active:scale-[0.97] outline-none focus-visible:ring-3 focus-visible:ring-ring/40">
-                    <span className="text-muted-foreground">{x.city}</span>{x.from.name} → {x.to.name}
-                  </button>
-                ))}
+            <div className="flex flex-col gap-4">
+              <HowItWorks />
+              <div className="flex items-baseline justify-between gap-3"><h2 className="text-xl">Try a trip</h2><span className="text-xs text-muted-foreground">Tap one to see it</span></div>
+              {/* Magic UI marquee of example trips; pauses on hover so a trip is easy to pick */}
+              <div className="relative -mx-1 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
+                <Marquee pauseOnHover className="[--duration:38s] [--gap:0.5rem] py-1">
+                  {EXAMPLES.map(x => (
+                    <button key={x.city} type="button" onClick={e => { (e.currentTarget as HTMLElement).blur(); autoCountry(x.from); setTrip(t => ({ ...t, from: x.from, to: x.to })) }}
+                      className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-medium shadow-[0_1px_0_rgba(0,0,0,0.03)] transition-[background-color,transform,border-color] hover:-translate-y-0.5 hover:border-foreground/40 active:scale-[0.97] outline-none focus-visible:ring-3 focus-visible:ring-ring/40">
+                      <span className="text-muted-foreground">{x.city}</span>{x.from.name} → {x.to.name}
+                    </button>
+                  ))}
+                </Marquee>
               </div>
             </div>
           ) : error ? (
@@ -185,9 +203,9 @@ export function TripView({ trip, setTrip }: { trip: TripState; setTrip: (fn: (t:
               {result.opts.length === 0 && <div className="rounded-2xl bg-secondary p-5">No routes found between these two places.</div>}
               {result.opts.map((op, i) => (
                 <motion.div key={op.key} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: i * 0.04, ease }}>
-                  <OptionCard op={op} cur={cur} from={trip.from!} to={trip.to!} selected={sel === op.key} open={open === op.key}
+                  <OptionCard op={op} cur={cur} from={trip.from!} to={trip.to!} selected={sel === op.key} open={open === op.key} highlight={i === 0}
                     onSelect={() => { setSel(op.key); setOpen(o => o === op.key ? null : op.key) }}
-                    actions={<FeedbackButton size="sm" done="Logged" onClick={() => log(op.key)}>I took this · log {op.cost ? money(roundNice(op.cost), cur) : 'it'}</FeedbackButton>} />
+                    actions={<FeedbackButton size="sm" done="Logged" celebrate onClick={() => log(op.key)}>I took this · log {op.cost ? money(roundNice(op.cost), cur) : 'it'}</FeedbackButton>} />
                 </motion.div>
               ))}
               <div className="flex flex-wrap items-center gap-3 pt-1">

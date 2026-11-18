@@ -29,6 +29,25 @@ Every action answers the tap:
 - **Adding a stop** slides the new card into the timeline with a brief outline, pops a numbered marker onto the map, and confirms with a toast. Moving or removing a stop animates the list, and removing offers Undo.
 - **Option cards** press in slightly when tapped, and their details expand smoothly.
 
+## Motion moments
+
+The app was flat and quiet. Following the Taste Skill's rule of **one ambient effect and a few moments**, rather than effects everywhere:
+
+| Where | Effect | Source | Why |
+|---|---|---|---|
+| Trip hero | Slow drifting threads behind the headline, masked at the edges | React Bits *Threads* (WebGL, pauses off-screen and when the tab is hidden) | The single ambient effect: it hints at routes without competing with content |
+| Headline | "Every way from A to B, **priced. / by metro. / on foot. …**" | React Bits *Rotating Text* (`popLayout` so the pill never empties) | Says what the app does in one line |
+| Empty state | From → five modes → To with pulses travelling along the beams | Magic UI *Animated Beam* (pulse reworked as a CSS dash: the original gradient sweep froze) | Shows how it works before anyone types |
+| Empty state | Example trips in a slow marquee that pauses on hover | Magic UI *Marquee* | Invites a first tap |
+| Search | Placeholder cycles real examples with a blur-slide | Idea from Aceternity *Placeholders and Vanish Input* | Teaches that any place works |
+| Results | Recommended card gets a travelling amber border; minutes count up | Magic UI *Border Beam*, React Bits *Count Up* | Draws the eye to the best option once |
+| Map | Routes draw in, the start marker pulses | Own CSS (stroke-dashoffset) | Connects the list to the map |
+| Logging | Confetti from the button, in theme colours | canvas-confetti | A small reward for the main action |
+| Day plan | A beam fills down the timeline as you scroll | Rewritten from Aceternity *Tracing Beam* (theme colours, live height) | Gives a long plan a sense of progress |
+| Spending | Budget-used ring: ink, amber when the pace is over, red when over | Magic UI *Animated Circular Progress Bar* | Budget at a glance |
+
+Amber (#f5c400) is the only accent and appears only in these moments. Every effect checks `prefers-reduced-motion` (Motion's `MotionConfig reducedMotion="user"` plus CSS media queries).
+
 ## Light and dark
 
 The header has a three-way switch (Light, Dark, Match device), mirrored in Settings → Appearance. The choice is saved in `localStorage` and applied by a tiny inline script in `index.html` before first paint, so there's no flash of the wrong theme.

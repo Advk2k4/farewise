@@ -20,7 +20,8 @@ src/
 │   ├── colour.ts            Keeps operator line colours visible on light and dark
 │   ├── budget.ts            Spending cycles (any start day), pace and per-day maths
 │   ├── store.ts             App data in localStorage + a tiny external store (useSyncExternalStore)
-│   └── utils.ts             shadcn's cn() helper
+│   ├── utils.ts             shadcn's cn() helper
+│   └── celebrate.ts         Theme-coloured confetti burst from an element
 ├── components/
 │   ├── PlaceInput.tsx       Worldwide place search (Popover + cmdk), select-all on focus, clear, location, recents
 │   ├── Segmented.tsx        Pill segmented control with a sliding thumb (Motion layoutId)
@@ -29,7 +30,10 @@ src/
 │   ├── OptionCard.tsx       Option card, route strip, steps, tags
 │   ├── RouteMap.tsx         Leaflet map with OSM tiles, monochrome markers, coloured transit lines
 │   ├── AddExpenseDialog.tsx Manual expense form (shadcn Dialog)
-│   └── ui/                  shadcn/ui primitives (restyled to DESIGN.md) + Magic UI NumberTicker
+│   ├── HowItWorks.tsx       From → modes → To diagram with animated beams (empty state)
+│   ├── TimelineBeam.tsx     Scroll-linked beam down the Day plan timeline
+│   ├── fx/                  React Bits effects: Threads (WebGL), RotatingText, CountUp
+│   └── ui/                  shadcn/ui primitives (restyled to DESIGN.md) + Magic UI NumberTicker, AnimatedBeam, BorderBeam, Marquee, AnimatedCircularProgressBar
 └── views/
     ├── TripView.tsx         From → to, options, shareable URL state
     ├── PlanView.tsx         Multi-stop day planner (lazy-loaded)

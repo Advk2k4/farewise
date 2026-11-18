@@ -184,5 +184,13 @@
 .theme-fade, .theme-fade *, .theme-fade *::before, .theme-fade *::after {
   transition: background-color .3s ease, color .3s ease, border-color .3s ease, fill .3s ease, stroke .3s ease, box-shadow .3s ease !important;
 }
+.fw-pulse::after { content: ''; position: absolute; inset: -3px; border-radius: 50%; border: 2px solid var(--pulse); animation: fw-pulse 2.2s cubic-bezier(.2,0,0,1) infinite; }
+@keyframes fw-pulse { from { transform: scale(1); opacity: .55 } to { transform: scale(2.8); opacity: 0 } }
+@media (prefers-reduced-motion: reduce) { .fw-pulse::after { animation: none; opacity: 0 } }
 .fw-pop { display: block; animation: fw-pop .38s cubic-bezier(.2,1.4,.4,1) both; }
 @keyframes fw-pop { from { transform: scale(.2); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+/* Animated beam pulse (HowItWorks): a short dash runs along each path, then rests. */
+.fw-beam { stroke-dasharray: 0.16 4; stroke-dashoffset: 0.16; animation-name: fw-beam; animation-timing-function: linear; animation-fill-mode: both; }
+/* --beam-end is set per beam so the dash crosses in `duration`, then rests (off the path) for `repeatDelay`. */
+@keyframes fw-beam { from { stroke-dashoffset: 0.16; } to { stroke-dashoffset: var(--beam-end, -1); } }
+@media (prefers-reduced-motion: reduce) { .fw-beam { animation: none; stroke-dasharray: none; opacity: .35; } }

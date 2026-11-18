@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PlaceInput } from '@/components/PlaceInput'
 import { OptionCard, RouteStrip, Tags, costText } from '@/components/OptionCard'
 import { FeedbackButton } from '@/components/FeedbackButton'
+import { TimelineBeam } from '@/components/TimelineBeam'
 import { RouteMap, type MapPoint } from '@/components/RouteMap'
 import { clearNetCache, type Place } from '@/lib/api'
 import { tripOptions, type Option, type RoutingPrefs } from '@/lib/options'
@@ -228,6 +229,7 @@ export function PlanView() {
           )}
         </section>
 
+        <TimelineBeam>
         <ol className={cn('flex flex-col transition-opacity duration-200', loading && 'opacity-60')} aria-busy={loading}>
           <li className="grid gap-4 sm:grid-cols-[72px_1fr]">
             <span className="hidden pt-5 text-right text-sm font-semibold tabular sm:block">{timeOf(atLocal(plan.date, plan.startTime))}</span>
@@ -293,9 +295,10 @@ export function PlanView() {
             </li>
           )}
         </ol>
+        </TimelineBeam>
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border p-5">
           <p className="max-w-[46ch] text-sm text-muted-foreground">Did this plan? Log every leg to Spending in one tap. You can edit amounts later.</p>
-          <FeedbackButton done="Logged" onClick={logDay}>Log {legs} trips · {money(res.cost, cur)}</FeedbackButton>
+          <FeedbackButton done="Logged" celebrate onClick={logDay}>Log {legs} trips · {money(res.cost, cur)}</FeedbackButton>
         </div>
       </div>
     )

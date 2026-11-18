@@ -6,6 +6,8 @@ import { fmtDist, fmtMin, money, timeOf } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/lib/theme'
 import { needsOutline } from '@/lib/colour'
+import { BorderBeam } from '@/components/ui/border-beam'
+import CountUp from '@/components/fx/CountUp'
 
 const KIND_ICON = { walk: Footprints, bike: Bike, car: Car, taxi: CarTaxiFront, auto: CarTaxiFront, transit: TramFront }
 
@@ -75,13 +77,14 @@ function Steps({ op, cur }: { op: Option; cur: string }) {
 }
 
 /** One way to make the trip: headline numbers, route strip, tags; expands into steps and actions. */
-export function OptionCard({ op, cur, selected, open, onSelect, from, to, actions }: {
-  op: Option; cur: string; selected: boolean; open: boolean; onSelect: () => void; from: Place; to: Place; actions?: React.ReactNode
+export function OptionCard({ op, cur, selected, open, onSelect, from, to, actions, highlight }: {
+  op: Option; cur: string; selected: boolean; open: boolean; onSelect: () => void; from: Place; to: Place; actions?: React.ReactNode; highlight?: boolean
 }) {
+  const dark = useTheme().resolved === 'dark'
   const Icon = KIND_ICON[op.kind]
   return (
     <motion.div layout="position" whileTap={{ scale: 0.99 }} transition={{ type: 'spring', stiffness: 500, damping: 40 }}
-      className={cn('rounded-2xl border bg-card transition-[border-color,box-shadow] duration-150',
+      className={cn('relative rounded-2xl border bg-card transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5',
         selected ? 'border-foreground shadow-[inset_0_0_0_1px_var(--foreground)]' : 'border-border hover:border-faint')}>
       <button type="button" onClick={onSelect} aria-expanded={open} className="flex w-full flex-col gap-3 rounded-2xl p-4 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40">
         <div className="flex items-start gap-3">
@@ -91,7 +94,7 @@ export function OptionCard({ op, cur, selected, open, onSelect, from, to, action
             <div className="truncate text-sm text-muted-foreground">{op.sub}</div>
           </div>
           <div className="shrink-0 text-right">
-            <div className="text-lg font-bold leading-6 tabular">{fmtMin(op.min)}</div>
+            <div className="text-lg font-bold leading-6 tabular">{op.min < 60 ? <><CountUp to={Math.max(1, Math.round(op.min))} duration={0.9} trigger="load" /> min</> : fmtMin(op.min)}</div>
             <div className="text-sm text-muted-foreground tabular">{costText(op, cur)}</div>
           </div>
         </div>
@@ -118,6 +121,8 @@ export function OptionCard({ op, cur, selected, open, onSelect, from, to, action
           </motion.div>
         )}
       </AnimatePresence>
+      {/* Magic UI border beam marks the top pick: amber running into ink */}
+      {highlight && <BorderBeam size={110} duration={7} colorFrom="#f5c400" colorTo={dark ? '#ffffff' : '#000000'} borderWidth={1.5} />}
     </motion.div>
   )
 }

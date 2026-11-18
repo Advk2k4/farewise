@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import { toast } from 'sonner'
 import { Clock, House, LocateFixed, MapPin, X } from 'lucide-react'
 import { Command, CommandGroup, CommandItem, CommandList } from '@/components/ui/command'
@@ -24,7 +25,7 @@ function geolocate(): Promise<Place> {
 
 /** Search box for any place in the world, with current location, home and recent places. */
 export function PlaceInput({ id, label, value, placeholder, icon, onPick, bias, className }: {
-  id: string; label: string; value: Place | null; placeholder: string
+  id: string; label: string; value: Place | null; placeholder: string | string[]
   icon?: React.ReactNode; onPick: (p: Place) => void; bias?: Place | null; className?: string
 }) {
   const data = useData()
@@ -38,6 +39,15 @@ export function PlaceInput({ id, label, value, placeholder, icon, onPick, bias, 
   // select everything on focus so typing replaces the old place (the mouseup after a click would otherwise undo it)
   const selectAll = () => requestAnimationFrame(() => { const el = inputRef.current; if (el && document.activeElement === el) el.setSelectionRange(0, el.value.length) })
   const seq = useRef(0)
+  // Several placeholders cycle with a soft slide while the box is empty (after Aceternity's vanishing-placeholder input)
+  const hints = Array.isArray(placeholder) ? placeholder : [placeholder]
+  const [hint, setHint] = useState(0)
+  const showHint = !text && !locating
+  useEffect(() => {
+    if (hints.length < 2 || !showHint || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const iv = setInterval(() => setHint(h => (h + 1) % hints.length), 2800)
+    return () => clearInterval(iv)
+  }, [hints.length, showHint])
 
   useEffect(() => { if (!open) setText(value?.name ?? '') }, [value, open])
 
@@ -80,7 +90,7 @@ export function PlaceInput({ id, label, value, placeholder, icon, onPick, bias, 
             <div className="min-w-0 flex-1 py-2">
               <label htmlFor={id} className="block text-xs font-medium text-muted-foreground">{label}</label>
               <input
-                ref={inputRef} id={id} name={id} value={locating ? 'Finding you…' : text} placeholder={placeholder} autoComplete="off" spellCheck={false}
+                ref={inputRef} id={id} name={id} value={locating ? 'Finding you…' : text} placeholder={hints.length > 1 ? '' : hints[0]} aria-placeholder={hints[0]} autoComplete="off" spellCheck={false}
                 role="combobox" aria-expanded={open} aria-controls={`${id}-list`} aria-autocomplete="list"
                 className="w-full truncate bg-transparent text-base font-medium outline-none placeholder:font-normal placeholder:text-faint"
                 onFocus={() => { setOpen(true); justFocused.current = true; selectAll() }}
@@ -89,6 +99,15 @@ export function PlaceInput({ id, label, value, placeholder, icon, onPick, bias, 
                 onChange={e => { setText(e.target.value); setOpen(true) }}
                 onKeyDown={e => { if (e.key === 'Escape') { setOpen(false); setText(value?.name ?? '') } }}
               />
+              {hints.length > 1 && showHint && (
+                <div aria-hidden="true" className="pointer-events-none absolute right-12 bottom-2 left-[42px] h-6 overflow-hidden">
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.span key={hint} className="block truncate text-base text-faint" initial={{ y: 14, opacity: 0, filter: 'blur(4px)' }} animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }} exit={{ y: -14, opacity: 0, filter: 'blur(4px)' }} transition={{ duration: 0.32, ease: [0.2, 0, 0, 1] }}>
+                      {hints[hint]}
+                    </motion.span>
+                  </AnimatePresence>
+                </div>
+              )}
               {value?.area && !open && <div className="truncate text-xs text-muted-foreground">{value.area}</div>}
             </div>
             {open && text && (
