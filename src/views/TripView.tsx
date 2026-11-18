@@ -120,7 +120,7 @@ export function TripView({ trip, setTrip }: { trip: TripState; setTrip: (fn: (t:
       <div className="flex min-w-0 flex-col gap-6">
         <motion.header className="relative" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease }}>
           {/* The one ambient effect: React Bits Threads, drifting like route lines behind the headline (pauses off-screen and for reduced motion) */}
-          <div aria-hidden="true" className="pointer-events-none absolute -inset-x-4 sm:-inset-x-10 -top-14 -bottom-10 -z-10 [mask-image:linear-gradient(180deg,transparent,#000_18%,#000_62%,transparent)]">
+          <div aria-hidden="true" className="pointer-events-none absolute -inset-x-4 sm:-inset-x-10 -top-14 -bottom-10 -z-10 [mask-image:linear-gradient(180deg,transparent,#000_18%,#000_62%,transparent),linear-gradient(90deg,#000_70%,transparent)] [mask-composite:intersect]">
             <Threads color={dark ? '#ffffff' : '#000000'} accentColor="#f5c400" amplitude={1.7} distance={0.4} lineCount={70} thickness={0.55} angle={18} speed={0.3} opacity={dark ? 0.45 : 0.4} enableMouseInteraction={false} className="h-full w-full" />
           </div>
           <h1 className="text-[36px] leading-[44px] sm:text-[44px] sm:leading-[52px]">

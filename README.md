@@ -44,6 +44,8 @@ Free, no sign-up, no API keys. It works on phone and laptop, with a light, dark 
 - Logging a trip ends with a **small burst of confetti**; the Day plan timeline **fills as you scroll**, and Spending shows a **budget ring**.
 - All of it stops under *Reduce motion*.
 
+![The home screen: beams show every mode between From and To before you type](docs/screenshots/home.png)
+
 ### 🌗 Light and dark
 - Switch between **Light, Dark and Match device** from the header or Settings; your choice is remembered.
 - Both themes are tuned together: line colours stay visible on either background, the map follows the theme, and all text meets WCAG AA contrast.
