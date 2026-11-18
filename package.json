@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b",
-    "test": "rolldown src/lib/logic.test.ts --platform node --format esm --file node_modules/.tmp/logic.test.mjs --log-level warn --transform.define import.meta.env.BASE_URL:\\\"/\\\" && node --test node_modules/.tmp/logic.test.mjs"
+    "test": "rolldown src/lib/logic.test.ts --platform node --format esm --file .test-out/logic.test.mjs --log-level warn --transform.define import.meta.env.BASE_URL:\\\"/\\\" && node --test .test-out/logic.test.mjs"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",

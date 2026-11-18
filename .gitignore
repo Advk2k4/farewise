@@ -13,3 +13,6 @@ dist/
 
 # launch video output (/brag-slim)
 brag-output/
+
+# bundled test (npm test)
+.test-out/
