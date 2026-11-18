@@ -9,6 +9,7 @@ const SpendingView = lazy(() => import('@/views/SpendingView').then(m => ({ defa
 const SettingsView = lazy(() => import('@/views/SettingsView').then(m => ({ default: m.SettingsView })))
 import { autoCountry, homeCurrency, ratesFor, tripCountry, useData } from '@/lib/store'
 import { cn } from '@/lib/utils'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 type Tab = 'trip' | 'plan' | 'spending' | 'settings'
 const TABS: { id: Tab; label: string; Icon: typeof Navigation }[] = [
@@ -76,6 +77,7 @@ export default function App() {
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-2">
+            <ThemeToggle />
             <button type="button" onClick={() => go('settings')} title="Prices follow the country you search in. Change rates in Settings"
               className="hidden h-10 items-center rounded-full bg-secondary px-3.5 text-sm font-medium tabular transition-colors hover:bg-pressed sm:inline-flex outline-none focus-visible:ring-3 focus-visible:ring-ring/40">
               {tab === 'trip' && trip.from ? (() => { const cc = tripCountry(prefs, trip.from, trip.to); return `${cc} · ${ratesFor(prefs, cc).cur}` })() : `Spending in ${homeCurrency(prefs)}`}
@@ -100,7 +102,7 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      <footer className="bg-[#000] text-white">
+      <footer className="border-t border-transparent bg-[#000] text-white dark:border-border dark:bg-[#0d0d0d]">
         <div className="mx-auto flex max-w-[1240px] flex-col gap-6 px-4 py-10 pb-28 sm:px-8 md:flex-row md:items-end md:justify-between md:pb-10">
           <div>
             <div className="text-lg font-bold">Farewise</div>

@@ -4,16 +4,19 @@ import { CAT_NAME, TRANSIT_LABEL, mapsUrl, type Option, type Seg } from '@/lib/o
 import type { Place } from '@/lib/api'
 import { fmtDist, fmtMin, money, timeOf } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { useTheme } from '@/lib/theme'
+import { needsOutline } from '@/lib/colour'
 
 const KIND_ICON = { walk: Footprints, bike: Bike, car: Car, taxi: CarTaxiFront, auto: CarTaxiFront, transit: TramFront }
 
 /** A leg of a route as a compact chip. Transit lines keep their operator's colour; everything else stays monochrome. */
 function Chip({ s }: { s: Seg }) {
+  const dark = useTheme().resolved === 'dark'
   const m = Math.max(1, Math.round(s.min))
   if (s.cat === 'walk') return <span className="inline-flex h-6 items-center gap-1 rounded-full border border-dashed border-border px-2 text-xs font-medium text-muted-foreground"><Footprints className="size-3" />{m}</span>
   const style = s.color ? { background: s.color, color: s.text ?? '#fff' } : undefined
   return (
-    <span style={style} className={cn('inline-flex h-6 items-center gap-1 rounded-full px-2 text-xs font-semibold', !s.color && 'bg-foreground text-background')}>
+    <span style={style} className={cn('inline-flex h-6 items-center gap-1 rounded-full px-2 text-xs font-semibold', !s.color && 'bg-foreground text-background', s.color && needsOutline(s.color, dark) && 'ring-1 ring-inset ring-foreground/30')}>
       {s.label}<span className="font-normal opacity-80 tabular">{m}</span>
     </span>
   )

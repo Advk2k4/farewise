@@ -24,7 +24,7 @@ export function Segmented<T extends string>({ value, options, onChange, label, c
             onClick={() => choose(i)} whileTap={{ scale: 0.94 }} transition={{ type: 'spring', stiffness: 600, damping: 32 }}
             className={cn('relative rounded-[36px] font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/40',
               size === 'sm' ? 'h-8 px-3 text-[13px]' : 'h-9 px-3.5 text-sm', on ? 'text-foreground' : 'text-muted-foreground hover:text-foreground')}>
-            {on && <motion.span layoutId={`seg-${id}`} className="absolute inset-0 rounded-[36px] bg-card shadow-float" transition={{ type: 'spring', stiffness: 520, damping: 38 }} />}
+            {on && <motion.span layoutId={`seg-${id}`} className="absolute inset-0 rounded-[36px] bg-thumb shadow-float" transition={{ type: 'spring', stiffness: 520, damping: 38 }} />}
             <span className="relative">{l}</span>
           </motion.button>
         )

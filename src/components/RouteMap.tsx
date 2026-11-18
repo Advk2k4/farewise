@@ -3,6 +3,8 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { Line } from '@/lib/options'
 import { cn } from '@/lib/utils'
+import { useTheme } from '@/lib/theme'
+import { lineColour } from '@/lib/colour'
 
 export type MapPoint = { lat: number; lng: number; label: string; kind: 'from' | 'to' | 'stop'; n?: number }
 
@@ -10,6 +12,7 @@ const css = (v: string) => getComputedStyle(document.documentElement).getPropert
 
 /** Leaflet map with OpenStreetMap tiles; redraws only when its points or lines change. */
 export function RouteMap({ points, lines, className }: { points: MapPoint[]; lines: Line[]; className?: string }) {
+  const dark = useTheme().resolved === 'dark'
   const el = useRef<HTMLDivElement>(null)
   const map = useRef<L.Map | null>(null)
   const layer = useRef<L.LayerGroup | null>(null)
@@ -40,17 +43,22 @@ export function RouteMap({ points, lines, className }: { points: MapPoint[]; lin
     return () => { ro.disconnect(); m.remove(); map.current = null }
   }, [])
 
-  const key = JSON.stringify([points.map(p => [p.lat, p.lng, p.label]), lines.map(l => [l.cat, l.color, l.coords.length, l.coords[0]])])
+  // redraws when the theme flips so markers and lines take the new colours
+  const lastPlaces = useRef('')
+  const themeOnly = useRef(false)
+  const placeKey = JSON.stringify([points.map(p => [p.lat, p.lng]), lines.map(l => l.coords.length)])
+  const key = JSON.stringify([dark, points.map(p => [p.lat, p.lng, p.label]), lines.map(l => [l.cat, l.color, l.coords.length, l.coords[0]])])
   useEffect(() => {
     const m = map.current, g = layer.current
     if (!m || !g) return
+    themeOnly.current = placeKey === lastPlaces.current; lastPlaces.current = placeKey
     g.clearLayers()
     const ink = css('--foreground'), canvas = css('--background'), faint = css('--faint')
     const pts: L.LatLngExpression[] = []
     for (const l of lines) {
       if (l.coords.length < 2) continue
       const walk = l.cat === 'walk'
-      L.polyline(l.coords, { color: walk ? faint : l.color || ink, weight: walk ? 4 : 6, opacity: 0.95, dashArray: walk ? '1 9' : undefined, lineCap: 'round', lineJoin: 'round' }).addTo(g)
+      L.polyline(l.coords, { color: walk ? faint : l.color ? lineColour(l.color, dark) : ink, weight: walk ? 4 : 6, opacity: 0.95, dashArray: walk ? '1 9' : undefined, lineCap: 'round', lineJoin: 'round' }).addTo(g)
       pts.push(...l.coords)
     }
     for (const p of points) {
@@ -63,10 +71,10 @@ export function RouteMap({ points, lines, className }: { points: MapPoint[]; lin
         .bindTooltip(p.label, { direction: 'top', offset: [0, -10] }).addTo(g)
       pts.push([p.lat, p.lng])
     }
-    // a new trip always re-centres the map, even after the user moved it
-    userMoved.current = false
+    // a new trip always re-centres the map, even after the user moved it (a theme change keeps your view)
+    if (!themeOnly.current) userMoved.current = false
     bounds.current = pts.length === 1 ? L.latLng(pts[0] as [number, number]) : pts.length ? L.latLngBounds(pts) : null
-    fit(true)
+    if (!themeOnly.current) fit(true)
   }, [key]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return <div ref={el} className={cn('isolate overflow-hidden rounded-2xl bg-muted', className)} role="region" aria-label="Map of the route" />

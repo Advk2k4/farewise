@@ -8,6 +8,10 @@
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
     <meta name="color-scheme" content="light dark" />
+    <script>
+      // apply the saved theme before first paint (no flash); src/lib/theme.ts takes over after load
+      try { var t = localStorage.getItem('farewise-theme'); var d = t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; document.documentElement.classList.toggle('dark', d); document.documentElement.style.colorScheme = d ? 'dark' : 'light' } catch (e) {}
+    </script>
     <link rel="preconnect" href="https://api.transitous.org" crossorigin />
     <link rel="preconnect" href="https://routing.openstreetmap.de" crossorigin />
     <link rel="preconnect" href="https://photon.komoot.io" crossorigin />

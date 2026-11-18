@@ -215,14 +215,14 @@ export function PlanView() {
     const legs = res.legs.filter(l => l.chosen).length
     body = (
       <div className="flex flex-col gap-6">
-        <section aria-label="Plan summary" className="rounded-2xl bg-foreground p-6 text-background sm:p-7">
+        <section aria-label="Plan summary" className="rounded-2xl bg-[#000] p-6 text-white sm:p-7 dark:border dark:border-border dark:bg-card dark:text-foreground">
           <dl className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
             {[['Travel time', fmtMin(res.travel)], ['Estimated cost', money(res.cost, cur)], ['Done by', timeOf(res.end)], ['Legs', `${legs}`]].map(([k, v]) => (
               <div key={k} className="min-w-0"><dt className="text-[13px] opacity-70">{k}</dt><dd className="mt-1.5 truncate text-2xl font-bold tabular sm:text-[26px]">{v}</dd></div>
             ))}
           </dl>
           {allowance != null && (
-            <p className="mt-5 border-t border-background/15 pt-4 text-sm opacity-85">{res.cost <= allowance
+            <p className="mt-5 border-t border-white/15 pt-4 text-sm opacity-85 dark:border-border">{res.cost <= allowance
               ? <>Within your daily budget, about {money(Math.max(0, allowance), cur)} a day left this cycle.</>
               : <>{money(res.cost - Math.max(0, allowance), cur)} over your daily budget of about {money(Math.max(0, allowance), cur)}.</>}</p>
           )}

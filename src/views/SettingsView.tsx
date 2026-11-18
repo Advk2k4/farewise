@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import { Segmented } from '@/components/Segmented'
 import { FeedbackButton } from '@/components/FeedbackButton'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { PlaceInput } from '@/components/PlaceInput'
 import { COUNTRIES, FALLBACK_COUNTRY, countryName, type Rates } from '@/lib/rates'
 import { cycleLabel, cycleStartFor } from '@/lib/budget'
@@ -46,6 +47,11 @@ export function SettingsView() {
         <h1 className="text-[36px] leading-[44px]">Settings</h1>
         <p className="mt-2 max-w-[60ch] text-muted-foreground">Saved in this browser only. Use a backup code to copy everything to another device.</p>
       </header>
+
+      <Section title="Appearance" id="s-look">
+        <ThemeToggle labels className="w-fit" />
+        <p className="text-sm text-muted-foreground">Match device follows your phone or computer’s light/dark setting. The switch is also in the header.</p>
+      </Section>
 
       <Section title="Home" id="s-home">
         <PlaceInput id="home" label="Your home, the default start for day plans" value={P.home} placeholder="Search your address…" icon={<House className="size-4" />}
