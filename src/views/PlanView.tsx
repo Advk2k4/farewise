@@ -241,7 +241,7 @@ export function PlanView() {
               if (!st) return null
               const k = stopKey(st.place)
               const spare = s.meet ? Math.round((s.meet.getTime() - s.arr.getTime()) / 60000) : 0
-              const fast = s.status === 'late' ? s.leg.opts.reduce((a, b) => b.arrive < a.arrive ? b : a) : null
+              const fast = s.status === 'late' && s.leg.opts.length ? s.leg.opts.reduce((a, b) => b.arrive < a.arrive ? b : a) : null
               return (
                 <motion.li key={k} layout initial={{ opacity: 0, y: -10, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, x: 24, transition: { duration: 0.18 } }} transition={spring}>
                   <LegRow leg={s.leg} cur={cur} open={openLeg === s.leg.key} onToggle={() => setOpenLeg(o => o === s.leg.key ? null : s.leg.key)} onPick={k2 => setPlan({ ...plan, choice: { ...plan.choice, [s.leg.key]: k2 } })} />

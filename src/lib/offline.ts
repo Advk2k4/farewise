@@ -4,6 +4,7 @@
 import { addMin, hav, type LatLng } from './format'
 import type { Place } from './api'
 import type { Option, RoutingPrefs, Seg, Line } from './options'
+import { PRIORITY_K, noAutoZone } from './rates'
 
 type NetLine = { ref: string; name: string; colour: string | null; mode: 'metro' | 'rail' | 'monorail'; network: string; stops: [string, number, number][] }
 type Network = { id: string; name: string; cc: string; bbox: [number, number, number, number]; updated: string; lines: NetLine[] }
@@ -57,7 +58,8 @@ function buildGraph(net: Network): Graph {
 }
 
 async function graphFor(o: LatLng, d: LatLng): Promise<Graph | null> {
-  indexP ??= fetch(`${BASE}index.json`).then(r => r.ok ? r.json() : []).catch(() => [])
+  indexP ??= fetch(`${BASE}index.json`).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() })
+    .catch(() => { indexP = null; return [] })   // try again on the next search
   const hit = (await indexP).find(c => inBox(o, c.bbox) && inBox(d, c.bbox))
   if (!hit) return null
   if (!netP.has(hit.id)) netP.set(hit.id, fetch(`${BASE}${hit.id}.json`).then(r => r.json()).then(buildGraph))
@@ -85,7 +87,7 @@ function access(p: LatLng, n: Node, P: RoutingPrefs, walkOnly: boolean): Access 
   if (walkOnly) return walkKm <= 2 ? { mode: 'walk', min: walkKm / 4.5 * 60, cost: 0, km: walkKm } : null
   const km = straight * 1.35, min = 4 + km / 18 * 60
   const R = P.rates
-  if (R.autoBase != null && R.autoKm != null && !(p.lat >= 18.88 && p.lat <= 19.035 && p.lng >= 72.77 && p.lng <= 72.875)) return { mode: 'auto', min, km, cost: R.autoBase + R.autoKm * Math.max(0, km - 1.5) }
+  if (R.autoBase != null && R.autoKm != null && !noAutoZone(p)) return { mode: 'auto', min, km, cost: R.autoBase + R.autoKm * Math.max(0, km - 1.5) }
   return { mode: 'taxi', min, km, cost: R.taxiBase + R.taxiKm * km + R.taxiMin * (km / 18 * 60) }
 }
 
@@ -94,7 +96,7 @@ export async function offlineTransit(o: Place, d: Place, when: Date, arriveBy: b
   const g = await graphFor(o, d)
   if (!g) return []
   const out: Option[] = [], seen = new Set<string>()
-  const lam = { money: 25, balanced: 10, time: 3 }[P.priority] / Math.max(P.rates.fare, 1e-6)
+  const lam = PRIORITY_K[P.priority] / Math.max(P.rates.fare, 1e-6)
   const variants: [boolean, (m: NetLine['mode']) => boolean][] = [[false, () => true], [false, m => m !== 'rail'], [false, m => m === 'rail'], [true, () => true]]
   for (const [walkOnly, allow] of variants) {
     const N = g.nodes.length, dist = new Float64Array(N).fill(Infinity)

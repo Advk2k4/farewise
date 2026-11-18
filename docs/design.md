@@ -40,7 +40,7 @@ The app was flat and quiet. Following the Taste Skill's rule of **one ambient ef
 | Empty state | From → five modes → To with pulses travelling along the beams | Magic UI *Animated Beam* (pulse reworked as a CSS dash: the original gradient sweep froze) | Shows how it works before anyone types |
 | Empty state | Example trips in a slow marquee that pauses on hover | Magic UI *Marquee* | Invites a first tap |
 | Search | Placeholder cycles real examples with a blur-slide | Idea from Aceternity *Placeholders and Vanish Input* | Teaches that any place works |
-| Results | Recommended card gets a travelling amber border; minutes count up | Magic UI *Border Beam*, React Bits *Count Up* | Draws the eye to the best option once |
+| Results | Recommended card gets a travelling amber border; minutes count up | Magic UI *Border Beam* and *Number Ticker* | Draws the eye to the best option once |
 | Map | Routes draw in, the start marker pulses | Own CSS (stroke-dashoffset) | Connects the list to the map |
 | Logging | Confetti from the button, in theme colours | canvas-confetti | A small reward for the main action |
 | Day plan | A beam fills down the timeline as you scroll | Rewritten from Aceternity *Tracing Beam* (theme colours, live height) | Gives a long plan a sense of progress |

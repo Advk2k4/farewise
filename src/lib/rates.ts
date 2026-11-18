@@ -62,6 +62,12 @@ export const COUNTRIES: Record<string, Country> = {
 
 
 export const FALLBACK_COUNTRY = 'US'
+
+/** Minutes one local transit fare is "worth", by what matters most to you. */
+export const PRIORITY_K = { money: 25, balanced: 10, time: 3 }
+// Places where auto-rickshaws aren't allowed (Mumbai's island city, south of Bandra/Sion)
+const NO_AUTO_ZONES: [number, number, number, number][] = [[18.88, 72.77, 19.035, 72.875]]
+export const noAutoZone = (p: { lat: number; lng: number }) => NO_AUTO_ZONES.some(([s, w, n, e]) => p.lat >= s && p.lat <= n && p.lng >= w && p.lng <= e)
 export function defaultRates(cc?: string | null): Rates {
   const c = COUNTRIES[cc ?? ''] ?? COUNTRIES[FALLBACK_COUNTRY]
   return { cur: c.cur, taxiBase: c.taxi[0], taxiKm: c.taxi[1], taxiMin: c.taxi[2], fare: c.fare, fuel: c.fuel, lper100: 7.5, ...(c.auto ? { autoBase: c.auto[0], autoKm: c.auto[1] } : {}) }

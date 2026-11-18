@@ -8,14 +8,14 @@ import { AnimatedCircularProgressBar } from '@/components/ui/animated-circular-p
 import { useTheme } from '@/lib/theme'
 import { AddExpenseDialog } from '@/components/AddExpenseDialog'
 import { cycleInfo, cycleStartFor, shiftCycle, type CycleInfo } from '@/lib/budget'
-import { atLocal, money, prettyDate, shortDate, todayISO } from '@/lib/format'
+import { atLocal, money, prettyDate, shortDate, timeOf, todayISO } from '@/lib/format'
 import { update, useData } from '@/lib/store'
 import { cn } from '@/lib/utils'
 
-const MODES = ['taxi', 'car', 'transit', 'bike', 'walk', 'other'] as const
+const MODES = ['taxi', 'auto', 'car', 'transit', 'bike', 'walk', 'other'] as const
 type Mode = typeof MODES[number]
-export const MODE_NAME: Record<Mode, string> = { taxi: 'Taxi', car: 'Driving', transit: 'Transit', bike: 'Bike', walk: 'Walk', other: 'Other' }
-const MODE_SHADE: Record<Mode, string> = { taxi: 'var(--chart-1)', transit: 'var(--chart-2)', car: 'var(--chart-3)', bike: 'var(--chart-4)', walk: 'var(--chart-5)', other: 'var(--chart-4)' }
+export const MODE_NAME: Record<Mode, string> = { taxi: 'Taxi', auto: 'Auto rickshaw', car: 'Driving', transit: 'Transit', bike: 'Bike', walk: 'Walk', other: 'Other' }
+const MODE_SHADE: Record<Mode, string> = { taxi: 'var(--chart-1)', auto: 'var(--chart-5)', transit: 'var(--chart-2)', car: 'var(--chart-3)', bike: 'var(--chart-4)', walk: 'var(--chart-5)', other: 'var(--chart-4)' }
 const cat = (m: string): Mode => (MODES as readonly string[]).includes(m) ? m as Mode : 'other'
 
 function symbolOf(cur: string) {
@@ -78,9 +78,11 @@ export function SpendingView({ goSettings }: { goSettings: () => void }) {
   const over = mi.budget > 0 && mi.projected > mi.budget
 
   const removeTrip = (date: string, id: string) => {
-    const before = structuredClone(data.days[date]?.trips ?? [])
+    const at = data.days[date]?.trips.findIndex(t => t.id === id) ?? -1
+    if (at < 0) return
+    const gone = data.days[date].trips[at]
     update(d => { d.days[date].trips = d.days[date].trips.filter(t => t.id !== id) })
-    toast('Trip deleted', { action: { label: 'Undo', onClick: () => update(d => { d.days[date] = { trips: before } }) } })
+    toast('Trip deleted', { action: { label: 'Undo', onClick: () => update(d => { const cur = d.days[date]?.trips ?? []; if (!cur.some(t => t.id === id)) d.days[date] = { trips: [...cur.slice(0, at), gone, ...cur.slice(at)] } }) } })
   }
   const setAmount = (date: string, id: string, v: number) => update(d => {
     const t = d.days[date]?.trips.find(x => x.id === id); if (!t) return
@@ -173,7 +175,7 @@ export function SpendingView({ goSettings }: { goSettings: () => void }) {
               return (
                 <div key={t.id} className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 py-1.5 text-sm">
                   <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium">{MODE_NAME[m]}</span>
-                  <span className="min-w-0 break-words">{t.t && <span className="text-muted-foreground tabular">{new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(atLocal(dt, t.t))} </span>}
+                  <span className="min-w-0 break-words">{t.t && <span className="text-muted-foreground tabular">{timeOf(atLocal(dt, t.t))} </span>}
                     {t.from ? `${t.from} → ${t.to}` : t.note || t.label}{tc !== cur && <span className="ml-1 text-xs text-muted-foreground">({tc}, not counted)</span>}</span>
                   <Input type="number" min={0} step="any" inputMode="decimal" aria-label={`Amount paid in ${tc}`} defaultValue={t.cost}
                     onBlur={e => { const v = Number(e.target.value); if (!Number.isNaN(v) && v !== t.cost) setAmount(dt, t.id, v) }}

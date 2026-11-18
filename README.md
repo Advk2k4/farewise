@@ -80,7 +80,7 @@ It queries them all at once, prices each option from local rates, and ranks the 
 
 **React 19 · TypeScript · Vite · Tailwind CSS v4 · shadcn/ui (Radix) · Motion · Magic UI · React Bits · Leaflet**
 
-A few effects are adapted from [Magic UI](https://magicui.design) (animated beams, border beam, marquee, progress ring), [React Bits](https://reactbits.dev) (Threads, Rotating Text, Count Up) and [Aceternity UI](https://ui.aceternity.com) (the idea behind the timeline beam and the cycling search hints). Confetti is [canvas-confetti](https://github.com/catdad/canvas-confetti).
+A few effects are adapted from [Magic UI](https://magicui.design) (animated beams, border beam, marquee, progress ring), [React Bits](https://reactbits.dev) (Threads, Rotating Text) and [Aceternity UI](https://ui.aceternity.com) (the idea behind the timeline beam and the cycling search hints). Confetti is [canvas-confetti](https://github.com/catdad/canvas-confetti).
 
 The design follows [`DESIGN.md`](DESIGN.md), a black-and-white mobility design system from [awesome-claude-design](https://github.com/VoltAgent/awesome-claude-design). It was shaped with the [Taste Skill](https://github.com/Leonxlnx/taste-skill), audited against the [Vercel Web Interface Guidelines](https://github.com/vercel-labs/web-interface-guidelines), and tested in a real browser with [Playwright](https://github.com/microsoft/playwright-cli). See **[docs/design.md](docs/design.md)**.
 
@@ -93,7 +93,7 @@ npm install
 npm run dev        # → http://localhost:5173
 ```
 
-`npm run build` type-checks and builds to `dist/`. Every push to `main` deploys to GitHub Pages through [`.github/workflows/pages.yml`](.github/workflows/pages.yml).
+`npm test` checks the budget-cycle and undo logic. `npm run build` type-checks and builds to `dist/`. Every push to `main` deploys to GitHub Pages through [`.github/workflows/pages.yml`](.github/workflows/pages.yml).
 
 ## Project structure
 

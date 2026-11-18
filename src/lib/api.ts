@@ -74,6 +74,8 @@ export type TransitLeg = {
 }
 export type Itinerary = { start: Date; end: Date; min: number; transfers: number; legs: TransitLeg[] }
 
+// shortcut: every visitor's browser calls Transitous directly, so their ~720 plans/day guideline is shared by the
+// whole site (Day plan asks once per leg). Coordinate with Transitous, or add a proxy with a cache, before heavy traffic.
 export async function transitPlan(o: Place, d: Place, when: Date, arriveBy: boolean): Promise<Itinerary[]> {
   const u = new URL(`${API.transit}/plan`)
   u.searchParams.set('fromPlace', `${o.lat.toFixed(6)},${o.lng.toFixed(6)}`)

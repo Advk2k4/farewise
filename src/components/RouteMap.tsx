@@ -70,7 +70,7 @@ export function RouteMap({ points, lines, className }: { points: MapPoint[]; lin
         : `<span style="display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:${canvas};color:${ink};font:600 12px/1 system-ui;box-shadow:inset 0 0 0 2px ${ink},0 2px 8px rgba(0,0,0,.25)">${p.n ?? ''}</span>`
       const size = isEnd ? 16 : 24
       L.marker([p.lat, p.lng], { icon: L.divIcon({ html: `<span class="fw-pop">${html}</span>`, className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2] }), keyboard: false, title: p.label })
-        .bindTooltip(p.label, { direction: 'top', offset: [0, -10] }).addTo(g)
+        .bindTooltip(Object.assign(document.createElement('span'), { textContent: p.label }), { direction: 'top', offset: [0, -10] }).addTo(g)
       pts.push([p.lat, p.lng])
     }
     // a new trip always re-centres the map, even after the user moved it (a theme change keeps your view)

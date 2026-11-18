@@ -50,11 +50,11 @@ export function decodePolyline(str: string, precision = 5): [number, number][] {
 }
 
 const FMT: Record<string, Intl.NumberFormat> = {}
+const fmt = (cur: string, digits?: number) => FMT[`${cur}|${digits}`] ??= new Intl.NumberFormat(undefined, { style: 'currency', currency: cur, minimumFractionDigits: digits, maximumFractionDigits: digits })
 export function money(n: number, cur = 'USD') {
   try {
-    const base = FMT[cur] ??= new Intl.NumberFormat(undefined, { style: 'currency', currency: cur })
-    const digits = Math.abs(n) >= 10 || Number.isInteger(n) ? 0 : (base.resolvedOptions().maximumFractionDigits ?? 2)
-    return new Intl.NumberFormat(undefined, { style: 'currency', currency: cur, minimumFractionDigits: digits, maximumFractionDigits: digits }).format(n)
+    const digits = Math.abs(n) >= 10 || Number.isInteger(n) ? 0 : (fmt(cur).resolvedOptions().maximumFractionDigits ?? 2)
+    return fmt(cur, digits).format(n)
   } catch { return `${cur} ${Math.round(n)}` }
 }
 export const roundNice = (n: number) => n >= 1000 ? Math.round(n / 10) * 10 : n >= 100 ? Math.round(n) : n >= 10 ? Math.round(n * 2) / 2 : Math.round(n * 10) / 10

@@ -21,7 +21,8 @@ src/
 │   ├── budget.ts            Spending cycles (any start day), pace and per-day maths
 │   ├── store.ts             App data in localStorage + a tiny external store (useSyncExternalStore)
 │   ├── utils.ts             shadcn's cn() helper
-│   └── celebrate.ts         Theme-coloured confetti burst from an element
+│   ├── celebrate.ts         Theme-coloured confetti burst from an element
+│   └── logic.test.ts        Tests for budget cycles and undo (`npm test`, Node's built-in runner)
 ├── components/
 │   ├── PlaceInput.tsx       Worldwide place search (Popover + cmdk), select-all on focus, clear, location, recents
 │   ├── Segmented.tsx        Pill segmented control with a sliding thumb (Motion layoutId)
@@ -32,7 +33,7 @@ src/
 │   ├── AddExpenseDialog.tsx Manual expense form (shadcn Dialog)
 │   ├── HowItWorks.tsx       From → modes → To diagram with animated beams (empty state)
 │   ├── TimelineBeam.tsx     Scroll-linked beam down the Day plan timeline
-│   ├── fx/                  React Bits effects: Threads (WebGL), RotatingText, CountUp
+│   ├── fx/                  React Bits effects: Threads (WebGL), RotatingText
 │   └── ui/                  shadcn/ui primitives (restyled to DESIGN.md) + Magic UI NumberTicker, AnimatedBeam, BorderBeam, Marquee, AnimatedCircularProgressBar
 └── views/
     ├── TripView.tsx         From → to, options, shareable URL state

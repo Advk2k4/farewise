@@ -91,9 +91,9 @@ export function autoCountry(p?: Place | null) {
   if (!data.prefs.country && p?.cc && COUNTRIES[p.cc]) setHomeCountry(p.cc)
 }
 export function addTrips(date: string, trips: Trip[]) {
-  const before = structuredClone(data.days[date]?.trips ?? [])
   update(d => { d.days[date] = { trips: [...(d.days[date]?.trips ?? []), ...trips] } })
-  return () => update(d => { d.days[date] = { trips: before } })
+  const ids = new Set(trips.map(t => t.id))
+  return () => update(d => { if (d.days[date]) d.days[date].trips = d.days[date].trips.filter(t => !ids.has(t.id)) })
 }
 export function blankPlan(date: string): Plan { return { date, start: null, startTime: '09:00', ret: true, stops: [], choice: {} } }
 export const planFor = (date: string) => data.plans[date] ?? blankPlan(date)

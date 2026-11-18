@@ -1,7 +1,7 @@
 // Turns route lookups into comparable options: time, estimated cost, ranking and tags.
 import { addMin, hav, timeOf } from './format'
 import { roadRoute, transitPlan, type Place } from './api'
-import type { Rates } from './rates'
+import { PRIORITY_K, noAutoZone, type Rates } from './rates'
 import { offlineTransit } from './offline'
 
 export type Cat = 'walk' | 'bike' | 'car' | 'taxi' | 'bus' | 'tram' | 'metro' | 'rail' | 'ferry'
@@ -32,11 +32,6 @@ export const modeCat = (m: string): Cat =>
   : m === 'BUS' || m === 'COACH' || m === 'ODM' ? 'bus' : m === 'FERRY' ? 'ferry' : m === 'TRAM' ? 'tram'
   : m === 'SUBWAY' || m === 'METRO' ? 'metro' : 'rail'
 export const CAT_NAME: Record<Cat, string> = { walk: 'Walk', bike: 'Bike', car: 'Drive', taxi: 'Taxi', bus: 'Bus', tram: 'Tram', metro: 'Metro', rail: 'Train', ferry: 'Ferry' }
-const PRIORITY_K = { money: 25, balanced: 10, time: 3 } // minutes one local transit fare is "worth"
-
-// Places where auto-rickshaws aren't allowed (Mumbai's island city, south of Bandra/Sion)
-const NO_AUTO_ZONES: [number, number, number, number][] = [[18.88, 72.77, 19.035, 72.875]]
-const inZone = (p: { lat: number; lng: number }) => NO_AUTO_ZONES.some(([s, w, n, e]) => p.lat >= s && p.lat <= n && p.lng >= w && p.lng <= e)
 
 // OSRM has no live traffic, so driving time is scaled by typical traffic for the hour.
 export function trafficFactor(d: Date) {
@@ -82,7 +77,7 @@ export async function tripOptions(o: Place, d: Place, when: Date, arriveBy: bool
     opts.push({ ...base, key: 'taxi', kind: 'taxi', title: 'Taxi or ride-hail', sub: `${c.km.toFixed(1)} km, door to door`, min: taxiMin, cost: tc, costLo: tc * 0.85, costHi: tc * (rush ? 1.5 : 1.2), ...timing(taxiMin), rush,
       segs: [{ cat: 'taxi', label: 'Taxi', min: taxiMin, km: c.km, from: o.name, to: d.name }], lines: [{ coords: c.line, cat: 'taxi' }],
       notes: [...(rush ? ['Rush-hour traffic is likely'] : []), 'Includes about 5 min to get picked up'], mapsMode: 'driving', parts: { taxi: tc } })
-    if (R.autoBase != null && R.autoKm != null && c.km <= 25 && !inZone(o) && !inZone(d)) {
+    if (R.autoBase != null && R.autoKm != null && c.km <= 25 && !noAutoZone(o) && !noAutoZone(d)) {
       const am = drive * 1.05 + 3, ac = R.autoBase + R.autoKm * Math.max(0, c.km - 1.5)
       opts.push({ ...base, key: 'auto', kind: 'auto', title: 'Auto rickshaw', sub: `${c.km.toFixed(1)} km, meter fare`, min: am, cost: ac, costLo: ac * 0.9, costHi: ac * 1.25, ...timing(am), rush,
         segs: [{ cat: 'taxi', label: 'Auto', min: am, km: c.km, from: o.name, to: d.name }], lines: [{ coords: c.line, cat: 'taxi' }],
@@ -124,7 +119,7 @@ export async function tripOptions(o: Place, d: Place, when: Date, arriveBy: bool
   return { opts, status }
 }
 
-function rank(opts: Option[], P: RoutingPrefs) {
+export function rank(opts: Option[], P: RoutingPrefs) {
   const lam = PRIORITY_K[P.priority] / Math.max(P.rates.fare, 1e-6)
   for (const op of opts) {
     let s = op.min + lam * op.cost + (op.transfers ?? 0) * 3
@@ -146,7 +141,7 @@ function rank(opts: Option[], P: RoutingPrefs) {
   const usable = opts.filter(x => x.kind !== 'walk' || x.min <= 40)
   const cheapest = (usable.length ? usable : opts).reduce((a, b) => b.cost < a.cost - 0.001 || (Math.abs(b.cost - a.cost) < 0.001 && b.min < a.min) ? b : a)
   cheapest.tags.push('Cheapest')
-  opts.reduce((a, b) => b.arrive < a.arrive ? b : a).tags.push('Fastest')
+  opts.reduce((a, b) => b.min < a.min ? b : a).tags.push('Fastest')
 }
 
 export const mapsUrl = (o: Place, d: Place, mode: string) =>

@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import { useTheme } from '@/lib/theme'
 import { needsOutline } from '@/lib/colour'
 import { BorderBeam } from '@/components/ui/border-beam'
-import CountUp from '@/components/fx/CountUp'
+import { NumberTicker } from '@/components/ui/number-ticker'
 
 const KIND_ICON = { walk: Footprints, bike: Bike, car: Car, taxi: CarTaxiFront, auto: CarTaxiFront, transit: TramFront }
 
@@ -94,7 +94,7 @@ export function OptionCard({ op, cur, selected, open, onSelect, from, to, action
             <div className="truncate text-sm text-muted-foreground">{op.sub}</div>
           </div>
           <div className="shrink-0 text-right">
-            <div className="text-lg font-bold leading-6 tabular">{op.min < 60 ? <><CountUp to={Math.max(1, Math.round(op.min))} duration={0.9} trigger="load" /> min</> : fmtMin(op.min)}</div>
+            <div className="text-lg font-bold leading-6 tabular">{op.min < 60 ? <><span className="sr-only">{fmtMin(op.min)}</span><span aria-hidden="true"><NumberTicker value={Math.max(1, Math.round(op.min))} className="tracking-normal text-current" /> min</span></> : fmtMin(op.min)}</div>
             <div className="text-sm text-muted-foreground tabular">{costText(op, cur)}</div>
           </div>
         </div>

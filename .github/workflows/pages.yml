@@ -27,6 +27,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm test               # budget cycles and undo
       - run: npm run build          # type-checks, then builds to dist/ with base /farewise/
       - run: touch dist/.nojekyll
       - uses: actions/configure-pages@v5
