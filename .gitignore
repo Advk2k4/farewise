@@ -10,3 +10,6 @@ dist/
 .shots/
 .taste-skill/
 *.tsbuildinfo
+
+# launch video output (/brag-slim)
+brag-output/

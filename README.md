@@ -6,13 +6,20 @@
 
 Free, no sign-up, no API keys. It works on phone and laptop, in light and dark mode.
 
-![King's Cross to the Tower of London](docs/screenshots/trip.png)
+<a href="https://advk2k4.github.io/farewise/launch/farewise-launch.mp4">
+  <img src="public/launch/preview.webp" alt="Farewise launch video: a trip from King's Cross to the Tower of London compared by metro, walking and taxi; the same app in Tokyo, Delhi and New York with local currency; and a day plan with on-time checks" width="100%">
+</a>
+
+<p align="center"><b><a href="https://advk2k4.github.io/farewise/launch/farewise-launch.mp4">▶ Watch the 20-second launch video with sound</a></b></p>
 
 ---
 
 ## Features
 
 ### 🧭 Trip
+
+![King's Cross to the Tower of London](docs/screenshots/trip.png)
+
 - **Search any address or place worldwide**, or use your current location; home and recent places are one tap away.
 - **Walking, cycling, public transit, taxi / ride-hail and driving**, side by side. Transit uses real timetables (live where operators share them), with line names and colours, changes and walking time.
 - **Leave now, Leave at or Arrive by.**
@@ -95,6 +102,7 @@ farewise/
 │   ├── components/           PlaceInput, OptionCard, RouteMap, AddExpenseDialog, ui/ (shadcn)
 │   └── views/                TripView, PlanView, SpendingView, SettingsView
 ├── public/networks/          bundled metro / local-train networks (OpenStreetMap)
+├── public/launch/            launch video, poster and README preview
 ├── scripts/fetch-networks.mjs  refresh those networks from Overpass
 ├── docs/
 │   ├── how-it-works.md       data sources, options, prices, ranking
